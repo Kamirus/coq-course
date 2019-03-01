@@ -92,10 +92,10 @@ End Z1.
 
 Section Z2.
 
-Parameter S T : Set.
-Parameter A : S -> T -> Prop.
-Parameter B : T -> Prop.
-Parameter C : Prop.
+Variable S T : Set.
+Variable A : S -> T -> Prop.
+Variable B : T -> Prop.
+Variable C : Prop.
 
 (* Lemma z2l1: (exists x, forall y, A x y) -> forall x, exists y, A x y. *)
 
@@ -138,6 +138,40 @@ Qed.
 
 
 End Z2.
+
+
+Section Z3.
+
+Variable T : Set.
+Variable C : T -> Prop.
+Variable S : T -> Prop.
+Variable G : T -> T -> Prop.
+
+Axiom a3 :
+forall x, C x /\ S x ->
+forall y, S y -> (~ G y y -> G x y) /\ (G y y -> ~ G x y).
+
+Lemma z3 : 
+~ exists x, C x /\ S x.
+Proof.
+  intro.
+  destruct H.
+  apply a3 with (y:=x) in H as H1.
+  - apply H1.
+    + apply H1.
+      intro.
+      apply H1.
+      * assumption.
+      * assumption.
+    + apply H1.
+      intro.
+      apply H1.
+      * assumption.
+      * assumption.
+  - apply H.
+Qed.
+
+End Z3.
 
 
 Section Z4.
