@@ -26,8 +26,21 @@ Proof.
   - assumption.
 Qed.
 
+Lemma z1l6: ~~~A -> ~A.
+Proof.
+  intro.
+  (* tauto. *)
+  intro.
+  absurd A.
+  - intro.
+    apply H.
+    intro.
+    absurd A; assumption.
+  - assumption.
+Qed.
+
 (* Lemma z1l7: (~A -> B) -> A *)
-(*            1  1 x  0 0 *)
+(*              1  1 x  0 0 *)
 
 Lemma z1l9: ((((A -> B) -> A) -> A) -> B) -> B.
 Proof.
@@ -54,25 +67,16 @@ Require Import Classical.
 Lemma z1l3: (~A -> A) -> A.
 Proof.
   intros.
-  tauto.
+  destruct classic with A.
+  - assumption.
+  - apply H.
+    assumption.
 Qed.
 
 Lemma z1l5: ~~A -> A.
 Proof.
   apply NNPP.
 Qed.
-
-Lemma z1l6: ~~~A -> ~A.
-Proof.
-  intro.
-  (* tauto. *)
-  intro.
-  absurd A.
-  - apply NNPP.
-    assumption.
-  - assumption.
-Qed.
-
 
 Lemma z1l8: ~(A -> B) -> A.
 Proof.
@@ -92,6 +96,8 @@ End Z1.
 
 Section Z2.
 
+Require Import Classical.
+
 Variable S T : Set.
 Variable A : S -> T -> Prop.
 Variable B : T -> Prop.
@@ -99,7 +105,20 @@ Variable C : Prop.
 
 (* Lemma z2l1: (exists x, forall y, A x y) -> forall x, exists y, A x y. *)
 
-(* Lemma z2l2: (~forall x, B x) -> exists x, ~(B x). *)
+Lemma z2l2: (~forall x, B x) -> exists x, ~(B x).
+Proof.
+  intro.
+  apply NNPP.
+  intro.
+  apply H.
+  intro.
+  destruct classic with (B x).
+  - assumption.
+  - exfalso.
+    apply H0.
+    exists x.
+    assumption.
+Qed.
 
 Lemma z2l3: (exists x, ~(B x)) -> (~forall x, B x).
 Proof.
@@ -111,7 +130,14 @@ Proof.
   - apply H0.
 Qed.  
 
-(* Lemma z2l4: (~exists x, B x) -> forall x, ~B x. *)
+Lemma z2l4: (~exists x, B x) -> forall x, ~B x.
+Proof.
+  intros.
+  intro.
+  apply H.
+  exists x.
+  assumption.
+Qed.
 
 Lemma z2l5: (forall x, ~B x) -> ~exists x, B x.
 Proof.
@@ -157,17 +183,7 @@ Proof.
   intro.
   destruct H.
   apply a3 with (y:=x) in H as H1.
-  - apply H1.
-    + apply H1.
-      intro.
-      apply H1.
-      * assumption.
-      * assumption.
-    + apply H1.
-      intro.
-      apply H1.
-      * assumption.
-      * assumption.
+  - apply H1; apply H1; intro; apply H1; assumption.
   - apply H.
 Qed.
 
@@ -239,5 +255,32 @@ Proof.
     assumption.
 Qed.
 
-
 End Z4.
+
+
+Section Z5.
+
+(* Auto -
+This tactic implements a Prolog-like resolution procedure to solve the current goal.
+It first tries to solve the goal using the assumption tactic,
+then it reduces the goal to an atomic one using intros
+and introduces the newly generated hypotheses as hints.
+Then it looks at the list of tactics associated to the head symbol of the goal
+and tries to apply one of them (starting from the tactics with lower cost).
+This process is recursively applied to the generated subgoals.
+
+By default, auto only uses the hypotheses of the current goal and
+the hints of the database named core. *)
+
+Variables A B : Prop.
+
+Lemma aux: A -> A /\ A /\ A /\ A /\ A.
+Proof.
+  (* auto 4. *)
+  auto 5.
+Qed.
+
+End Z5.
+
+
+
