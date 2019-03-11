@@ -5,14 +5,24 @@
 Inductive empty : Set := .
 
 Goal forall x:empty, true = false.
+Proof.
+  intro.
+  destruct x.
+Qed.
 
 (* 
 2. Zdefiniuj typ zamieszkany przez dokładnie jeden element i udowodnij cel 
 *)
 
-Inductive unit : Set := .
+Inductive unit : Set := 
+  | I : unit.
 
 Goal forall x y : unit, x = y.
+Proof.
+  intros.
+  destruct x; destruct y.
+  reflexivity.
+Qed.
 
 (*** Zadanie 2 - 3p ***)
 (* Rozważmy typ danych do reprezentacji formuł logiki pierwszego rzędu
@@ -26,20 +36,71 @@ Inductive form : Set :=
 
 (* Zauważ, że w tej reprezentacji nie potrzebujemy używać zmiennych,
 ponieważ kwantyfikator wiążący zmienne jest reprezentowany przez
-funkcję Coqa.
+funkcję Coqa. *)
 
-1. Zdefiniuj funkcję
+(* 1. Zdefiniuj funkcję *)
+(* interpret : form -> Prop, *)
+Fixpoint interpret (x : form) : Prop := 
+  match x with
+  | Eq a b => a = b
+  | Neg x => ~ (interpret x)
+  | Conj a b => interpret a /\ interpret b
+  | Forall f => forall n, interpret (f n)
+  end.
 
-interpret : form -> Prop,
+(* a -> b *)
+(* ~a \/ b *)
+(* ~(a /\ ~b) *)
+Notation "a ~> b" := 
+  (Neg (Conj a (Neg b)))
+  (at level 60, right associativity).
 
-która tłumaczy takie reprezentacje formuł na odpowiadające im formuły
+(* która tłumaczy takie reprezentacje formuł na odpowiadające im formuły
 Coqa.
 
 2. Napisz kilka przykładów reprezentacji formuł (ozn. A). Dla których
 z nich potrafisz udowodnic cel 
-Goal interpret A.  ?
+Goal interpret A.  ? *)
+Definition phi1 := Forall (fun n => Eq n n).
+Goal interpret phi1.
+Proof.
+  simpl.
+  intro.
+  reflexivity.
+Qed.
 
-3. Napisz alternatywną reprezentację formuł z jawnym użyciem
+Definition phi2 := 
+  Forall (fun n => 
+    Forall (fun m => Eq n m ~> Eq m n )).
+Goal interpret phi2.
+Proof.
+  simpl.
+  intros n m.
+  intro.
+  apply H.
+  symmetry.
+  apply H.
+Qed.
+
+Definition phi3 := 
+  Forall (fun a => 
+    Forall (fun b => 
+      Forall (fun c => (Conj (Eq a b) (Eq b c)) ~> Eq a c ))).
+Goal interpret phi3.
+Proof.
+  simpl.
+  intros a b c.
+  intro.
+  destruct H; destruct H0.
+  destruct H.
+  rewrite H; rewrite H0; reflexivity.
+Qed.
+
+(* a = b /\ b = c -> a = c *)
+(* ~(a = b /\ b = c) \/ a = c *)
+(* ~(a = b /\ b = c /\ ~a = c) *)
+
+(* 3. Napisz alternatywną reprezentację formuł z jawnym użyciem
 zmiennych, w której wszystkie konstruktory mają argumenty typu
 bazowego (nie funkcyjnego). Co jest teraz potrzebne, żeby zdefiniować
 funkcję interpret?
