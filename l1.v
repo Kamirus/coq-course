@@ -282,5 +282,12 @@ Qed.
 
 End Z5.
 
+Print nat.
+Print bool.
 
+
+Lemma t: nat <> bool.
+Proof.
+  intro.
+Qed.
 
