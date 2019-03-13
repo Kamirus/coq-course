@@ -109,7 +109,8 @@ intro n.
 case n.
 left; trivial.
 right.
-split with n0; trivial.
+split with n0.
+trivial.
 Qed.
 
 Print nat_0_or_S.

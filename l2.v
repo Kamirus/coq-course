@@ -256,6 +256,38 @@ Fixpoint bbtob (b : bbtree) : btree :=
   end.
 
 (* 5. Udowodnij, że te funkcje definiują bijekcję miedzy tymi typami.  *)
+Goal forall (b : btree), bbtob (btobb b) = b.
+Proof.
+  intros.
+  induction b.
+  - unfold btobb; unfold bbtob.
+    reflexivity.
+  - simpl.
+    rewrite IHb1; rewrite IHb2.
+    reflexivity.
+Qed.
+
+Require Import Logic.FunctionalExtensionality.
+
+Lemma packb_rewrite : forall (f : bool -> bbtree), packb bbtree (f true) (f false) = f.
+Proof.
+  intros.
+  apply functional_extensionality.
+  intros.
+  case x; simpl; reflexivity.
+Qed.
+
+Goal forall (b : bbtree), btobb (bbtob b) = b.
+Proof.
+  intros.
+  induction b.
+  - unfold btobb; unfold bbtob; reflexivity.
+  - simpl.
+    rewrite H.
+    rewrite H.
+    rewrite packb_rewrite.
+    reflexivity.
+Qed.
 
 (*** Zadanie 5 - 4p ***)
 (*
@@ -267,12 +299,97 @@ zwraca Some a, gdzie a jest n-tym elementem listy.  *)
 
 Variable A : Set.
 
-Definition nth : list A -> nat -> option A.
+Require Import Coq.Lists.List.
+
+(* Inductive aux : list A * nat -> Prop :=
+| aux1 : forall l, aux (l, 0)
+| aux2 : forall n, aux (nil, n)
+| aux3 : forall a n l, aux (l, n) -> aux (a :: l, S n). *)
+
+(* Inductive list_nat (A : Type) : Type :=
+| ln : (list A) -> nat -> (list_nat A). *)
+
+(* list_nat_rect = 
+  fun (P : list_nat -> Type) (f : forall l : list list_nat, P (Node l)) (l : list_nat) =>
+match l as l0 return (P l0) with
+| Node x => f x
+end
+     : forall P : list_nat -> Type,
+       (forall l : list list_nat, P (Node l)) -> forall l : list_nat, P l *)
+
+Fixpoint nth (l : list A) (n : nat) : option A :=
+  match l, n with
+  | nil, _ => None
+  | cons x xs, 0 => Some x
+  | cons x xs, S n' => nth xs n'
+  end.
+
+(* Fixpoint nth (A : Type) (l : list_nat A) {struct l} : option A :=
+  match l with
+  | ln _ l n => match (l, n) with
+             | (nil, _) => None
+             | (cons x xs, 0) => Some x
+             | (cons x xs, S n') => nth A (ln A xs n')
+             end
+  end. *)
+
+Theorem list_nat_ind: 
+  forall {X:Type} (P:list X * nat -> Prop),
+    forall n, P (nil, n) ->
+    forall l, P (l, 0) ->
+    forall a l n, P (l, n) -> P ((a :: l), (S n)) ->
+    forall l n, P (l, n).
+Proof. Admitted.
 
 (* 2. Udowodnij wlasność nth_in (nie używając taktyk automatycznych
 ani lematów bibliotecznych). *)
 
-Lemma nth_in:forall n l, n < length l -> exists a:A, nth l n = Some a. 
+(* Lemma nth_ind : forall (P : ) *)
+
+Lemma lt_lower : forall n m:nat, S n < m -> n < m.
+Proof.
+  intros.
+  unfold lt.
+  unfold lt in H.
+  auto with arith.
+Qed.
+
+Lemma nth_in:forall n l, n < length l -> exists a:A, nth l n = Some a.
+Proof.
+  intros.
+  induction (l, n) using @list_nat_ind.
+  (* unfold lt in H.
+  induction n; simpl in |- *.
+  induction l; simpl in |- *.
+  inversion H.
+  exists a; reflexivity. *)
+
+  (* case l, n. *)
+  induction n, l.
+  - inversion H.
+  - simpl.
+    exists a; reflexivity.
+  - inversion H.
+  - simpl.
+    assert (exists a0 : A, nth (a :: l) n = Some a0).
+    * apply IHn.
+      apply lt_lower.
+      assumption.
+    * 
+      apply H.
+      assert (n < S n).
+      unfold lt.
+      reflexivity.
+      transitivity (S n).
+      assumption.
+  
+  (* induction l.
+  - inversion H.
+  - induction n.
+    * simpl.
+      exists a; reflexivity.
+    * simpl. *)
+Qed. 
 
 (*** Zadanie 6 - 4p ***)
 (* Udowodnij cel *)
