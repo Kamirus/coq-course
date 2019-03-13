@@ -394,4 +394,32 @@ Qed.
 (*** Zadanie 6 - 4p ***)
 (* Udowodnij cel *)
 
+Lemma dif_nats : exists a b c : nat, a <> b /\ a <> c /\ b <> c.
+Proof.
+  exists 0.
+  exists 1.
+  exists 2.
+  auto.
+Qed.
+
 Goal nat <> bool.
+Proof.
+  intro.
+  assert (exists x y z : nat, x <> y /\ x <> z /\ y <> z).
+  apply dif_nats.
+  rewrite H in H0.
+  destruct H0 as [x].
+  destruct H0 as [y].
+  destruct H0 as [z].
+  destruct H0.
+  destruct H1.
+  case x, y, z.
+  - apply H0; reflexivity.
+  - apply H0; reflexivity.
+  - apply H1; reflexivity.
+  - apply H2; reflexivity.
+  - apply H2; reflexivity.
+  - apply H1; reflexivity.
+  - apply H0; reflexivity.
+  - apply H0; reflexivity.
+Qed.
