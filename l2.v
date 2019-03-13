@@ -2,12 +2,15 @@
 (* 
 1. Zdefiniuj typ pusty z co najmniej jednym konstruktorem i udowodnij cel 
 *)
-Inductive empty : Set := .
+Inductive empty : Set :=
+| empt : (forall P : Prop, P) -> empty.
 
 Goal forall x:empty, true = false.
 Proof.
   intro.
   destruct x.
+  exfalso.
+  apply p.
 Qed.
 
 (* 
