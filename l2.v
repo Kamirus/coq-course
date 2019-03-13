@@ -162,7 +162,34 @@ Proof.
   intros.
   unfold add.
   unfold zero.
-  
+  reflexivity.
+Qed.
+
+Goal forall n m : num, add (succ n) m = succ (add n m).
+Proof.
+  intros.
+  unfold add.
+  unfold succ.
+  reflexivity.
+Qed.
+
+Goal forall n : num, mult zero n = zero.
+Proof.
+  intros.
+  unfold mult.
+  simpl.
+  unfold zero.
+  reflexivity.
+Qed.
+
+(* (n + 1) * m = m + n * m *)
+Goal forall n m:num, mult (succ n) m = add m (mult n m).
+Proof.
+  intros.
+  unfold mult.
+  unfold add.
+  unfold succ.
+  reflexivity.
 Qed.
 
 (* Goal forall (n : nat) (n' : num) (m : nat) (m' : num),
