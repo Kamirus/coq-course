@@ -106,9 +106,13 @@ funkcję interpret?
 
 Możesz przyjąć, że zmienne są typu string. Przykład użycia poniżej. *)
 
+(* Jakieś środowisko potrzeba i sprawdzanie czy formuła jest zamknięta *)
+
 Require Import String.
+Require Import List.
 Definition var := string.
 Eval compute in (if string_dec "a" "b" then 1 else 2). (* porównanie napisów *)
+Eval compute in (if string_dec "a" "a" then 1 else 2). (* porównanie napisów *)
 
 Inductive form' : Set :=
 | Eq' : string -> string -> form' (* formuła atomowa opisująca rowność liczb *)
@@ -116,9 +120,25 @@ Inductive form' : Set :=
 | Conj' : form' -> form' -> form' (* koniunkcja *)
 | Forall' : string -> form' -> form'. (* kwantyfikator ogólny *)
 
-Definition ksi1 := Forall' "x" (Eq' "x" "x").
+Fixpoint fv (t : form') : list string := 
+  match t with
+  | Eq' a b => a :: b :: nil
+  | Neg' f => fv f
+  | Conj' a b => fv a ++ fv b
+  | Forall' x t => remove string_dec x (fv t)
+  end.
 
-(* ????? *)
+Fixpoint interpret' (s : string -> nat) (x : form') : Prop := 
+  match x with
+  | Eq' a b => s a = s b
+  | Neg' x => ~ (interpret' s x)
+  | Conj' a b => interpret' s a /\ interpret' s b
+  | Forall' x t => forall n, 
+    let s' := fun y => if string_dec x y then n else s y in
+    interpret' s' t
+  end.
+
+Definition ksi1 := Forall' "x" (Eq' "x" "x").
 
 (*** Zadanie 3 - 4p ***)
 (* 1. Zdefiniuj typ num do reprezentacji numerałów Churcha. *)
@@ -286,7 +306,7 @@ Fixpoint bbtob (b : bbtree) : btree :=
   end.
 
 (* 5. Udowodnij, że te funkcje definiują bijekcję miedzy tymi typami.  *)
-Goal forall (b : btree), bbtob (btobb b) = b.
+Goal forall b: btree, bbtob (btobb b) = b.
 Proof.
   intros.
   induction b.
@@ -299,7 +319,7 @@ Qed.
 
 Require Import Logic.FunctionalExtensionality.
 
-Lemma packb_rewrite : forall (f : bool -> bbtree), packb bbtree (f true) (f false) = f.
+Lemma packb_rewrite: forall f: bool -> bbtree, packb bbtree (f true) (f false) = f.
 Proof.
   intros.
   apply functional_extensionality.
@@ -307,7 +327,7 @@ Proof.
   case x; simpl; reflexivity.
 Qed.
 
-Goal forall (b : bbtree), btobb (bbtob b) = b.
+Goal forall b: bbtree, btobb (bbtob b) = b.
 Proof.
   intros.
   induction b.
@@ -387,13 +407,12 @@ Qed.
 Lemma nth_in:forall n l, n < length l -> exists a:A, nth l n = Some a.
 Proof.
   intros.
-  induction (l, n) using @list_nat_ind.
+  (* induction (l, n) using @list_nat_ind. *)
   (* unfold lt in H.
   induction n; simpl in |- *.
   induction l; simpl in |- *.
   inversion H.
   exists a; reflexivity. *)
-
   (* case l, n. *)
   induction n, l.
   - inversion H.
