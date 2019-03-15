@@ -374,6 +374,8 @@ Fixpoint nth (l : list A) (n : nat) : option A :=
   | cons x xs, S n' => nth xs n'
   end.
 
+(* Function <. Fixpoint *)
+
 (* Fixpoint nth (A : Type) (l : list_nat A) {struct l} : option A :=
   match l with
   | ln _ l n => match (l, n) with
@@ -396,48 +398,42 @@ ani lematów bibliotecznych). *)
 
 (* Lemma nth_ind : forall (P : ) *)
 
-Lemma lt_lower : forall n m:nat, S n < m -> n < m.
+Print le.
+
+Lemma lt_impl_le : forall n m : nat, n < m -> n <= m.
 Proof.
   intros.
-  unfold lt.
-  unfold lt in H.
-  auto with arith.
+  induction H; apply le_S.
+  - apply le_n.
+  - assumption.
 Qed.
 
-Lemma nth_in:forall n l, n < length l -> exists a:A, nth l n = Some a.
+Lemma lt_lower : forall n m:nat, S n <= S m -> n <= m.
 Proof.
   intros.
-  (* induction (l, n) using @list_nat_ind. *)
-  (* unfold lt in H.
-  induction n; simpl in |- *.
-  induction l; simpl in |- *.
   inversion H.
-  exists a; reflexivity. *)
-  (* case l, n. *)
-  induction n, l.
-  - inversion H.
-  - simpl.
-    exists a; reflexivity.
-  - inversion H.
-  - simpl.
-    assert (exists a0 : A, nth (a :: l) n = Some a0).
-    * apply IHn.
-      apply lt_lower.
-      assumption.
-    * 
-      apply H.
-      assert (n < S n).
-      unfold lt.
-      reflexivity.
-      transitivity (S n).
-      assumption.
-  
-  (* induction l.
-  - inversion H.
-  - induction n.
+  - apply le_n.
+  - apply lt_impl_le.
+    unfold lt.
+    assumption.
+Qed.
+
+Lemma nth_in:forall l n, n < length l -> exists a:A, nth l n = Some a.
+Proof.
+  induction l.
+  - intros.
+    inversion H.
+  - intros.
+    destruct n.
     * simpl.
-      exists a; reflexivity.
-    * simpl. *)
+      exists a.
+      reflexivity.
+    * simpl in H.
+      apply lt_lower in H.
+      apply IHl in H as H0; destruct H0.
+      simpl.
+      exists x.
+      assumption.
 Qed. 
 
 (*** Zadanie 6 - 4p ***)
