@@ -136,8 +136,9 @@ forall n:nat, n > 0 -> exists ! m:nat, S m = n.
 intro n; case n; intros.
 inversion H.
 unfold unique.
+(* exists n0. *)
 split with n0.
-split; congruence.
+split; intros; congruence.
 Qed.
 
 
@@ -261,15 +262,15 @@ subst.
 assumption.
 Qed.
 
-
 Lemma even_sum :
 forall n m, even n -> even m -> even (n+m).
 Proof.
 (*induction n; intros; auto.*)
-induction 1; intros.
+induction 1. intros.
 assumption.
 simpl.
-constructor.
+intro. apply evenSS.
+(* constructor. *)
 apply IHeven.
 assumption.
 Qed.
@@ -284,14 +285,31 @@ Lemma even_impossible :
 forall n, even (S (n+n)) -> False.
 Proof.
 induction n.
-inversion 1.
-intro.
-apply IHn.
-simpl in H.
-inversion_clear H.
-replace (S (n+n)) with (n+S n).
-trivial.
-auto.
+- inversion 1.
+- intro.
+  apply IHn.
+  simpl in H.
+  inversion H. subst.
+  (* inversion_clear H. *)
+  replace (S (n+n)) with (n+S n).
+  * assumption.
+  * auto.
+Qed.
+
+Lemma even_impossible12 :
+forall n, even n -> forall m, n = S (m+m) -> False.
+Proof.
+  induction 1.
+  - intros; inversion H.
+  - intros.
+    injection H0.
+    intro.
+    destruct m.
+    * discriminate H1.
+    * simpl in H1; injection H1; intro.
+      apply IHeven with m.
+      rewrite H2.
+      auto.
 Qed.
 
 Lemma even_impossible2 :
