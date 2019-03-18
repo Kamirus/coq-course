@@ -207,13 +207,56 @@ Fibonacciego wprost z definicji:
 
 F_0 = 0 
 F_1 = 1 
-F_n = F_(n-1) + F_(n-2)
+F_n = F_(n-1) + F_(n-2) *)
 
-2. Udowodnij cel
+Fixpoint fib (n : nat) : nat :=
+  match n with
+  | 0 => 0
+  | S n' => 
+    match n' with
+    | 0 => 1
+    | S n'' => fib n' + fib n''
+    end
+  end.
+
+(* 2. Udowodnij cel *)
+
+Require Import Arith.
+
+Lemma le_add : forall n m, 1 <= n -> 1 <= m -> 2 <= n + m.
+Proof.
+  intros.
+  induction H; cbn.
+  - apply lt_greater. assumption.
+  - apply le_S. assumption.
+Qed.
 
 Goal forall n, n > 0 -> fib n > 0.
+Proof.
+  unfold gt in *.
+  unfold lt in *.
+  intros.
+  induction n using strong_induction.
+  pattern n.
+  induction H; cbn.
+  * apply le_n.
+  * pattern m.
+    induction H.
+    + cbn. apply le_n.
+    + assert (1 <= fib m /\ 1 <= fib (S m)). split.
+      - apply H0.
+        unfold lt. apply le_S. apply le_n.
+        assumption.
+      - apply H0.
+          unfold lt. apply le_n.
+          apply le_S. assumption.
+      - destruct H1.
+        assert (2 <= fib (S m) + fib m).
+        apply le_add; assumption.
+        auto with arith.
+Qed.
 
-Jakiej zasady indukcji potrzebujesz?
+(* Jakiej zasady indukcji potrzebujesz?
 
 3*. Udowodnij następującą własność liczb Fibonacciego: Jeśli n jest
 podzielne przez 3, to fib n jest liczbą parzystą, a jeśli n nie jest
