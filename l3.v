@@ -1,26 +1,205 @@
 (*** Zadanie 1 - 1p ***)
-(* Rozważmy alternatywną definicję predykatu <=
+(* Rozważmy alternatywną definicję predykatu <= *)
 
 Definition le2 n m := exists k, m = n + k.
+(* Definition le2 n m := exists k, m = k + n. *)
 
-1. Udowodnij równoważność le2 i Coqowej definicji le.  2. Zapisz
-definicję le2 w sposób równoważny jako predykat definiowany
+(* 1. Udowodnij równoważność le2 i Coqowej definicji le. *)
+
+Lemma lt_impl_le : forall n m : nat, n < m -> n <= m.
+Proof.
+  intros.
+  induction H; apply le_S.
+  - apply le_n.
+  - assumption.
+Qed.
+
+Lemma lt_lower : forall n m:nat, S n <= S m -> n <= m.
+Proof.
+  intros.
+  inversion H.
+  - apply le_n.
+  - apply lt_impl_le.
+    unfold lt.
+    assumption.
+Qed.
+
+Print le.
+Lemma lt_greater : forall m n:nat, n <= m -> S n <= S m.
+Proof.
+  induction m. intros; induction n.
+  * apply le_n.
+  * inversion H.
+  * intros.
+    inversion H.
+    - apply le_n.
+    - clear m0 H0 H.
+      apply IHm in H1.
+      apply le_S.
+      assumption.
+Qed.
+
+Goal forall n m, n <= m -> le2 n m.
+Proof.
+  intros.
+  induction H.
+  - unfold le2.
+    exists 0. auto.
+  - unfold le2; unfold le2 in IHle; destruct IHle.
+    exists (S x).
+    rewrite H0.
+    auto.
+
+  (* other way *)
+  (* induction n; intros; unfold le2.
+  - exists m; simpl; reflexivity.
+  - induction m.
+    * inversion H.
+    * simpl.
+      apply lt_lower in H.
+      apply IHn in H; unfold le2 in H; destruct H.
+      exists x.
+      congruence. *)
+Qed.
+
+Lemma zero_lt : forall n, 0 <= n.
+Proof.
+  induction n.
+  - apply le_n.
+  - apply le_S; assumption.
+Qed.
+
+Goal forall n m, le2 n m -> n <= m.
+Proof.
+  (* intros.
+  unfold le2 in H.
+  destruct H.
+  induction x.
+  - rewrite H.
+    simpl.
+    apply le_n.
+  - apply IHx.
+    case x.
+    * simpl.
+      apply le_n.
+    * intros. *)
+  induction n; intros; unfold le2 in H; destruct H.
+  - apply zero_lt.
+  - induction m.
+    * inversion H.
+    * simpl in H.
+      inversion H.
+      clear H IHm.
+      apply lt_greater.
+      unfold le2 in IHn.
+      apply IHn.
+      exists x; reflexivity.
+Qed.
+
+(* 2. Zapisz definicję le2 w sposób równoważny jako predykat definiowany
 indukcyjnie. Dowód z punktu 1 powinien być nadal poprawny przy nowej
-definicji le2.
+definicji le2. *)
+Print le.
+(* Definition le2 n m := exists k, m = n + k. *)
+(* k = 0    : le2 n n *)
+(* k = k + 1: S m = S (n + k) *)
 
- *)
+Inductive le3 (n : nat) : nat -> Prop :=
+| le3_n : le3 n n
+| le3_S : forall m : nat, le3 n m -> le3 n (S m).
+
+Goal forall n m, n <= m -> le3 n m.
+Proof.
+  intros.
+  induction H.
+  - apply le3_n.
+  - apply le3_S.
+    assumption.
+Qed.
+
+Goal forall n m, le3 n m -> n <= m.
+Proof.
+  intros.
+  induction H.
+  - apply le_n.
+  - apply le_S.
+    assumption.
+Qed.
 
 (*** Zadanie 2 - 4p ***)
 (* Rozważmy zasadę indukcji noetherowskiej na zbiorze liczb
-naturalnych z porządkiem <=
+naturalnych z porządkiem <= *)
 
-forall P : nat -> Prop, 
-(forall n, (forall m, m < n -> P m) -> P n) ->
-forall n, P n.
+Hypothesis IH : forall (P : nat -> Prop) m, (forall n, n < m -> P n) -> P m.
 
-Udowodnij tę zasadę korzystając z indukcji matematycznej (tzn. z
-twierdzenia nat_ind). [Uwaga: trzeba wzmocnić hipotezę indukcyjną.]
-*)
+Lemma P0 : forall P : nat -> Prop, P 0.
+Proof.
+  intros.
+  apply IH.
+  intros.
+  inversion H.
+Qed.
+
+Lemma le_weaker : forall n m, S n <= m -> n <= m.
+Proof.
+  intros.
+  induction H.
+  - apply le_S. apply le_n.
+  - apply le_S. assumption.
+Qed.
+
+Lemma le_trans : forall a b, a <= b -> forall c, b <= c -> a <= c.
+Proof.
+  intros a b H.
+  induction H.
+  - intros. assumption.
+  - intros. induction H0.
+    * apply le_S. assumption.
+    * apply IHle.
+      apply le_S.
+      apply le_weaker.
+      assumption.
+Qed.
+
+Theorem strong_induction:
+  forall P : nat -> Prop,
+  (forall n, (forall m, m < n -> P m) -> P n) ->
+  forall n, P n.
+Proof.
+  intros.
+  apply H.
+  induction n.
+  - intros. inversion H0.
+  - induction m; intros. 
+    * apply H. intros. inversion H1.
+    * apply H. 
+      unfold lt in *.
+      intros.
+      apply IHn.
+      apply lt_lower in H0.
+      clear H IHn IHm P.
+      apply le_trans with (b := S m); assumption.
+Qed.
+
+(* Goal forall P : nat -> Prop,
+  (forall n, (forall m, m < n -> P m) -> P n) ->
+  forall n, P n.
+Proof.
+  intros. apply nat_ind.
+  - apply H. intros. inversion H0.
+  - intros.
+    apply nat_ind.
+    * apply H. intros. inversion H1.
+    * intros.
+      apply H.
+      intros.
+      unfold lt in *.
+Qed. *)
+
+Print nat_ind.
+
+(* Udowodnij tę zasadę korzystając z indukcji matematycznej (tzn. z
+twierdzenia nat_ind). [Uwaga: trzeba wzmocnić hipotezę indukcyjną.] *)
 
 (*** Zadanie 3 - 3p [+ 5p*] ***)
 (* 1. Zdefiniuj funkcję fib : nat -> nat wyznaczającą kolejne liczby
@@ -50,7 +229,8 @@ twierdzenia z punktu 2.
 (*** Zadanie 4 - 3p ***)
 (*
 
-1. Zdefiniuj indukcyjny predykat sub taki, że sub l1 l2 zachodzi wtw gdy l1 jest podlistą l2
+1. Zdefiniuj indukcyjny predykat sub taki, że sub l1 l2 zachodzi wtw
+gdy l1 jest podlistą l2
 (tj. l1 zawiera pewien podciąg elementów l2).
 
 2. Udowodnij, że wynik działania funkcji filter jest podlistą
