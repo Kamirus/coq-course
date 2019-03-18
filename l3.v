@@ -237,11 +237,9 @@ Proof.
   unfold lt in *.
   intros.
   induction n using strong_induction.
-  pattern n.
   induction H; cbn.
   * apply le_n.
-  * pattern m.
-    induction H.
+  * induction H.
     + cbn. apply le_n.
     + assert (1 <= fib m /\ 1 <= fib (S m)). split.
       - apply H0.
