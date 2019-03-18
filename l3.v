@@ -231,14 +231,29 @@ twierdzenia z punktu 2.
 
 1. Zdefiniuj indukcyjny predykat sub taki, że sub l1 l2 zachodzi wtw
 gdy l1 jest podlistą l2
-(tj. l1 zawiera pewien podciąg elementów l2).
+(tj. l1 zawiera pewien podciąg elementów l2). *)
 
-2. Udowodnij, że wynik działania funkcji filter jest podlistą
+(* 2. Udowodnij, że wynik działania funkcji filter jest podlistą
 argumentu tej funkcji: *)
 
 Require Import List.
 
-Inductive sub (A : Type) : list A -> list A -> Prop := ...
+Inductive sub (A : Type) : list A -> list A -> Prop := 
+| sub_n : forall xs, sub A xs xs
+| sub_c : forall x xs ys, sub A xs ys -> sub A (x :: xs) (x :: ys)
+| sub_s : forall x xs ys, sub A xs ys -> sub A       xs  (x :: ys).
+
+Print filter.
 
 Lemma filter_sublist:
-forall (A : Type) (f : A -> bool) l1 l2, l2 = filter f l1 -> sub l2 l1.
+(* forall (A : Type) (f : A -> bool) l1 l2, l2 = filter f l1 -> sub A l2 l1. *)
+forall (A : Type) (f : A -> bool) l, sub A (filter f l) l.
+Proof.
+  intros.
+  induction l.
+  - cbn. apply sub_n.
+  - cbn.
+    case (f a).
+    + apply sub_c. assumption.
+    + apply sub_s. assumption.
+Qed.
