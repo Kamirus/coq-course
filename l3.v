@@ -1,3 +1,6 @@
+Require Import Arith.
+Require Import Peano.
+
 (*** Zadanie 1 - 1p ***)
 (* Rozważmy alternatywną definicję predykatu <= *)
 
@@ -14,8 +17,9 @@ Proof.
   - assumption.
 Qed.
 
-Lemma lt_lower : forall n m:nat, S n <= S m -> n <= m.
+Lemma le_lower : forall m n, S n <= S m -> n <= m.
 Proof.
+  (* auto with arith. *)
   intros.
   inversion H.
   - apply le_n.
@@ -24,9 +28,9 @@ Proof.
     assumption.
 Qed.
 
-Print le.
-Lemma lt_greater : forall m n:nat, n <= m -> S n <= S m.
+Lemma le_greater : forall m n:nat, n <= m -> S n <= S m.
 Proof.
+  (* auto with arith. *)
   induction m. intros; induction n.
   * apply le_n.
   * inversion H.
@@ -49,17 +53,19 @@ Proof.
     exists (S x).
     rewrite H0.
     auto.
+Qed.
 
-  (* other way *)
-  (* induction n; intros; unfold le2.
+Goal forall n m, n <= m -> le2 n m.
+Proof.
+  induction n; intros; unfold le2.
   - exists m; simpl; reflexivity.
   - induction m.
     * inversion H.
     * simpl.
-      apply lt_lower in H.
+      apply le_lower in H.
       apply IHn in H; unfold le2 in H; destruct H.
       exists x.
-      congruence. *)
+      congruence.
 Qed.
 
 Lemma zero_lt : forall n, 0 <= n.
@@ -90,7 +96,7 @@ Proof.
     * simpl in H.
       inversion H.
       clear H IHm.
-      apply lt_greater.
+      apply le_greater.
       unfold le2 in IHn.
       apply IHn.
       exists x; reflexivity.
@@ -104,41 +110,39 @@ Print le.
 (* k = 0    : le2 n n *)
 (* k = k + 1: S m = S (n + k) *)
 
-Inductive le3 (n : nat) : nat -> Prop :=
-| le3_n : le3 n n
-| le3_S : forall m : nat, le3 n m -> le3 n (S m).
+Inductive le3 (n m k : nat) : Prop :=
+| le3c : m = n + k -> le3 n m k.
+(* Inductive le3 (n m k : nat) : Prop -> Prop :=
+| le3c : le3 n m k (m = n + k). *)
 
-Goal forall n m, n <= m -> le3 n m.
+(* Goal forall n m, le2 n m -> exists k, le3 n m k (m = n + k). *)
+Goal forall n m, le2 n m -> exists k, le3 n m k.
 Proof.
   intros.
-  induction H.
-  - apply le3_n.
-  - apply le3_S.
-    assumption.
+  unfold le2 in *. destruct H.
+  exists x.
+  apply le3c.
+  assumption.
 Qed.
 
-Goal forall n m, le3 n m -> n <= m.
+(* Goal forall n m k, le3 n m k (m = n + k) -> n <= m. *)
+Goal forall n m k, le3 n m k -> n <= m.
 Proof.
-  intros.
-  induction H.
-  - apply le_n.
-  - apply le_S.
-    assumption.
+  induction n; intros; unfold le2 in H; destruct H.
+  - apply zero_lt.
+  - induction m.
+    * inversion H.
+    * simpl in H.
+      inversion H.
+      clear H IHm.
+      apply le_greater.
+      unfold le2 in IHn.
+      auto with arith.
 Qed.
 
 (*** Zadanie 2 - 4p ***)
 (* Rozważmy zasadę indukcji noetherowskiej na zbiorze liczb
 naturalnych z porządkiem <= *)
-
-Hypothesis IH : forall (P : nat -> Prop) m, (forall n, n < m -> P n) -> P m.
-
-Lemma P0 : forall P : nat -> Prop, P 0.
-Proof.
-  intros.
-  apply IH.
-  intros.
-  inversion H.
-Qed.
 
 Lemma le_weaker : forall n m, S n <= m -> n <= m.
 Proof.
@@ -176,25 +180,38 @@ Proof.
       unfold lt in *.
       intros.
       apply IHn.
-      apply lt_lower in H0.
+      apply le_lower in H0.
       clear H IHn IHm P.
       apply le_trans with (b := S m); assumption.
 Qed.
 
-(* Goal forall P : nat -> Prop,
+Goal forall P : nat -> Prop,
   (forall n, (forall m, m < n -> P m) -> P n) ->
   forall n, P n.
 Proof.
-  intros. apply nat_ind.
-  - apply H. intros. inversion H0.
+  intros P Hind.
+  cut (forall n m, m <= n -> P m).
   - intros.
-    apply nat_ind.
-    * apply H. intros. inversion H1.
-    * intros.
-      apply H.
+    apply Hind.
+    intros.
+    apply H with (n := n).
+    unfold lt in H0.
+    auto with arith.
+  - induction n; intros.
+    * inversion H.
+      apply Hind.
       intros.
-      unfold lt in *.
-Qed. *)
+      inversion H1.
+    * unfold lt in *.
+      (* induction m.
+      + apply Hind. intros. inversion H0.
+      + apply Hind. intros. apply IHn. trans again *)
+      apply Hind. intros.
+      apply IHn.
+      clear P Hind IHn.
+      apply le_lower.
+      apply le_trans with (b := m); assumption.
+Qed.
 
 Print nat_ind.
 
@@ -221,13 +238,11 @@ Fixpoint fib (n : nat) : nat :=
 
 (* 2. Udowodnij cel *)
 
-Require Import Arith.
-
 Lemma le_add : forall n m, 1 <= n -> 1 <= m -> 2 <= n + m.
 Proof.
   intros.
   induction H; cbn.
-  - apply lt_greater. assumption.
+  - apply le_greater. assumption.
   - apply le_S. assumption.
 Qed.
 
@@ -254,18 +269,25 @@ Proof.
         auto with arith.
 Qed.
 
-(* Jakiej zasady indukcji potrzebujesz?
+(* Jakiej zasady indukcji potrzebujesz? *)
 
-3*. Udowodnij następującą własność liczb Fibonacciego: Jeśli n jest
+(* 3*. Udowodnij następującą własność liczb Fibonacciego: Jeśli n jest
 podzielne przez 3, to fib n jest liczbą parzystą, a jeśli n nie jest
 podzielne przez 3, to fib n jest liczbą nieparzystą. [Zdefiniuj
-predykaty parzystości i nieparzystości wzajemnie indukcyjnie.]
+predykaty parzystości i nieparzystości wzajemnie indukcyjnie.] *)
 
-4*. Zdefiniuj i udowodnij zasadę indukcji odzwierciedlającą schemat
+Inductive even : nat -> Prop :=
+| even0 : even 0
+| evenc : forall n, odd n -> even (S n)
+with odd : nat -> Prop :=
+| odd1 : odd 1
+| oddc : forall n, even n -> odd (S n).
+
+Goal : forall n, 
+
+(* 4*. Zdefiniuj i udowodnij zasadę indukcji odzwierciedlającą schemat
 wywołań rekurencyjnych funkcji Fibonacciego. Użyj jej do udowodnienia
-twierdzenia z punktu 2.
-
- *)
+twierdzenia z punktu 2. *)
 
 (*** Zadanie 4 - 3p ***)
 (*
