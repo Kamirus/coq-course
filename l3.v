@@ -207,12 +207,7 @@ Goal forall P : nat -> Prop,
 Proof.
   intros P Hind.
   cut (forall n m, m <= n -> P m).
-  - intros.
-    apply Hind.
-    intros.
-    apply H with (n := n).
-    unfold lt in H0.
-    auto with arith.
+  - intros. apply (H n n). apply le_n.
   - induction n; intros.
     * inversion H.
       apply Hind.
