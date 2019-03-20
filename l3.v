@@ -55,7 +55,7 @@ Proof.
     auto.
 Qed.
 
-Goal forall n m, n <= m -> le2 n m.
+Lemma le_to_le2 : forall n m, n <= m -> le2 n m.
 Proof.
   induction n; intros; unfold le2.
   - exists m; simpl; reflexivity.
@@ -75,7 +75,7 @@ Proof.
   - apply le_S; assumption.
 Qed.
 
-Goal forall n m, le2 n m -> n <= m.
+Lemma le2_to_le : forall n m, le2 n m -> n <= m.
 Proof.
   (* intros.
   unfold le2 in H.
@@ -153,6 +153,22 @@ Proof.
 Qed.
 
 Lemma le_trans : forall a b, a <= b -> forall c, b <= c -> a <= c.
+Proof.
+  induction a, b; intros.
+  assumption.
+  auto with arith.
+  inversion H.
+  apply le_to_le2 in H. apply le_to_le2 in H0.
+  apply le2_to_le.
+  unfold le2 in *.
+  destruct H. destruct H0.
+  exists (x + x0).
+  rewrite H in H0.
+  rewrite H0.
+  auto with arith.
+Qed.
+
+Lemma le_trans' : forall a b, a <= b -> forall c, b <= c -> a <= c.
 Proof.
   intros a b H.
   induction H.
