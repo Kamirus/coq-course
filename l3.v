@@ -213,7 +213,23 @@ Proof.
       apply le_trans with (b := m); assumption.
 Qed.
 
-Print nat_ind.
+(* stronger in Goal, same problem with le trans *)
+(* Goal forall P : nat -> Prop,
+  (forall n, (forall m, m < n -> P m) -> P n) ->
+  forall n, P n /\ (forall m, m < n -> P m).
+Proof.
+  intros P Hind.
+  induction n.
+  - split. apply Hind.
+    * intros. inversion H.
+    * intros. apply Hind. inversion H.
+  - destruct IHn as [H Hn]. split.
+    * apply Hind.
+      induction m; intros.
+      + apply Hind. intros. inversion H1.
+      + intros. 
+        apply Hind. intros.
+Qed. *)
 
 (* Udowodnij tę zasadę korzystając z indukcji matematycznej (tzn. z
 twierdzenia nat_ind). [Uwaga: trzeba wzmocnić hipotezę indukcyjną.] *)
@@ -283,7 +299,7 @@ with odd : nat -> Prop :=
 | odd1 : odd 1
 | oddc : forall n, even n -> odd (S n).
 
-Goal : forall n, 
+(* Goal : forall n,  *)
 
 (* 4*. Zdefiniuj i udowodnij zasadę indukcji odzwierciedlającą schemat
 wywołań rekurencyjnych funkcji Fibonacciego. Użyj jej do udowodnienia
