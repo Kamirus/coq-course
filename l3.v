@@ -310,7 +310,110 @@ with odd : nat -> Prop :=
 | odd1 : odd 1
 | oddc : forall n, even n -> odd (S n).
 
-(* Goal : forall n,  *)
+(* Definition div3 n := exists k, n = 3 * k. *)
+Inductive div3 : nat -> Prop :=
+| div30 : div3 0
+| div3c : forall n, div3 n -> div3 (S (S (S n))).
+
+Lemma fib3 : forall n, fib (S (S (S n))) = fib (S n) + fib n + fib (S n).
+Proof.
+  auto.
+Qed.
+
+Lemma even2 : forall n, even (2 * n).
+Proof.
+  induction n.
+  - cbn. apply even0.
+  - 
+    assert (2 * n = n + n). cbn. auto with arith.
+    assert (2 * S n = 2 + 2 * n). cbn. auto with arith.
+    rewrite H0.
+    apply evenc.
+    apply oddc.
+    assumption.
+Qed.
+
+Lemma even_to : forall n, even n -> exists k, n = 2 * k.
+Proof.
+  induction n; intros.
+  - exists 0. cbn. reflexivity.
+  - apply oddc in H.
+    + exists 1. cbn. reflexivity.
+
+  intros.
+  induction H.
+  - exists 0. cbn. reflexivity.
+  - induction H.
+    + exists 1. cbn. reflexivity.
+    + 
+
+  induction n. intros.
+  - exists 0. cbn. reflexivity.
+  -  induction n.
+    + intros. inversion H. inversion H1.
+    + intros.  
+Qed.
+
+Lemma evenplus : forall n, even n -> forall m, even m -> even (n + m).
+Proof.
+  induction n.
+  - intros. cbn. assumption.
+  - intro. induction m.
+    + intros. rewrite <- plus_n_O. assumption.
+    + intros.
+
+  intros n. induction 1; intros.
+  (* induction n; intros. *)
+  - cbn. assumption.
+  - cbn. apply evenc.
+    induction H0.
+    (* induction m. *)
+    + rewrite <- plus_n_O. assumption.
+    + rewrite <- plus_n_Sm.
+      apply oddc.
+Qed.
+
+Lemma plus_left : forall a b c, b = c -> a + b = a + c.
+Proof.
+  auto.
+Qed.
+
+Lemma even_aux : forall n, even n -> forall m, even (n + 2 * m).
+Proof.
+  intros n H.
+  induction m.
+  - intros. cbn. rewrite <- plus_n_O. assumption.
+  - 
+    assert (2 * S m = 2 + 2 * m).
+    rewrite <- mult_n_Sm.
+    auto with arith.
+
+    apply oddc in IHm. apply evenc in IHm.
+    rewrite H0.
+    cbn. cbn in IHm.
+    rewrite plus_n_Sm in IHm.
+    rewrite plus_n_Sm in IHm.
+    assumption.
+Qed.
+
+Lemma aba_eq_b2a : forall a b, a + b + a = b + 2 * a.
+Proof.
+  
+Qed.
+
+Goal forall n, div3 n -> even (fib n).
+Proof.
+  intros.
+  induction H.
+  - cbn. apply even0.
+  - 
+    rewrite fib3. simpl (fib (S (S n))).
+    assert (fib (S n) + fib n + fib (S n) = fib n + 2 * fib (S n)).
+    apply aba_eq_b2a.
+    rewrite H0.
+    apply even_aux.
+    assumption.
+Qed.
 
 (* 4*. Zdefiniuj i udowodnij zasadę indukcji odzwierciedlającą schemat
 wywołań rekurencyjnych funkcji Fibonacciego. Użyj jej do udowodnienia
