@@ -168,6 +168,8 @@ Proof.
   auto with arith.
 Qed.
 
+SearchPattern (_ + _ = _ + _).
+
 Lemma le_trans' : forall a b, a <= b -> forall c, b <= c -> a <= c.
 Proof.
   intros a b H.
@@ -214,14 +216,15 @@ Proof.
       intros.
       inversion H1.
     * unfold lt in *.
-      (* induction m.
-      + apply Hind. intros. inversion H0.
-      + apply Hind. intros. apply IHn. trans again *)
-      apply Hind. intros.
+      inversion H. (* <- key*)
+      apply Hind.
+      + intros. apply IHn. apply le_lower. assumption.
+      + apply IHn. assumption. 
+      (* apply Hind. intros.
       apply IHn.
       clear P Hind IHn.
       apply le_lower.
-      apply le_trans with (b := m); assumption.
+      apply le_trans with (b := m); assumption. *)
 Qed.
 
 (* stronger in Goal, same problem with le trans *)
@@ -333,50 +336,18 @@ Proof.
     assumption.
 Qed.
 
-Lemma even_to : forall n, even n -> exists k, n = 2 * k.
+(* how to *)
+(* Lemma even_to : forall n, even n -> exists k, n = 2 * k.
 Proof.
+  intros.
+  induction H.
+  
+
   induction n; intros.
   - exists 0. cbn. reflexivity.
   - apply oddc in H.
     + exists 1. cbn. reflexivity.
-
-  intros.
-  induction H.
-  - exists 0. cbn. reflexivity.
-  - induction H.
-    + exists 1. cbn. reflexivity.
-    + 
-
-  induction n. intros.
-  - exists 0. cbn. reflexivity.
-  -  induction n.
-    + intros. inversion H. inversion H1.
-    + intros.  
-Qed.
-
-Lemma evenplus : forall n, even n -> forall m, even m -> even (n + m).
-Proof.
-  induction n.
-  - intros. cbn. assumption.
-  - intro. induction m.
-    + intros. rewrite <- plus_n_O. assumption.
-    + intros.
-
-  intros n. induction 1; intros.
-  (* induction n; intros. *)
-  - cbn. assumption.
-  - cbn. apply evenc.
-    induction H0.
-    (* induction m. *)
-    + rewrite <- plus_n_O. assumption.
-    + rewrite <- plus_n_Sm.
-      apply oddc.
-Qed.
-
-Lemma plus_left : forall a b c, b = c -> a + b = a + c.
-Proof.
-  auto.
-Qed.
+Qed. *)
 
 Lemma even_aux : forall n, even n -> forall m, even (n + 2 * m).
 Proof.
@@ -398,7 +369,12 @@ Qed.
 
 Lemma aba_eq_b2a : forall a b, a + b + a = b + 2 * a.
 Proof.
-  
+  intros.
+  cbn.
+  rewrite plus_comm with (n := b) (m := (a + (a + 0))).
+  rewrite <- plus_n_O.
+  rewrite plus_comm.
+  apply plus_assoc.
 Qed.
 
 Goal forall n, div3 n -> even (fib n).
@@ -406,13 +382,49 @@ Proof.
   intros.
   induction H.
   - cbn. apply even0.
-  - 
-    rewrite fib3. simpl (fib (S (S n))).
+  - rewrite fib3. simpl (fib (S (S n))).
     assert (fib (S n) + fib n + fib (S n) = fib n + 2 * fib (S n)).
     apply aba_eq_b2a.
     rewrite H0.
     apply even_aux.
     assumption.
+Qed.
+
+(* Definition ndiv3 n : nat -> Prop := n = exists k r, 3 * k + r /\ r <= 2. *)
+
+(* mod3 n r  n mod 3 = r *)
+(* Definition mod3 n r := n mod 3 = r. *)
+Inductive mod3 : nat -> nat -> Prop :=
+| mod300 : mod3 0 0
+| mod30s : forall n, mod3 n 2 -> mod3 (S n) 0
+| mod31s : forall n, mod3 n 0 -> mod3 (S n) 1
+| mod32s : forall n, mod3 n 1 -> mod3 (S n) 2.
+
+Lemma unfold_mod3 : forall n r, mod3 n r -> exists k, n = 3 * k + r /\ r <= 2.
+Proof.
+  intros. induction H.
+  - exists 0. auto.
+  - destruct IHmod3. destruct H0. rewrite H0.
+    exists (S x). split. 
+    rewrite <- mult_n_Sm.
+    rewrite plus_n_Sm.
+    auto. auto.
+  - destruct IHmod3. destruct H0. rewrite H0.
+    exists x. split. auto with arith. auto.
+  - destruct IHmod3. destruct H0. rewrite H0.
+    exists x. split. auto with arith. auto.
+Qed.
+
+Goal forall n, mod3 n 1 -> odd (fib n).
+Proof.
+  intros. inversion H.
+  induction H.
+  - inversion H1.
+  - injection H1. intros.
+    apply unfold_mod3 in H0. apply unfold_mod3 in H.
+    destruct H0. destruct H.
+    destruct H. destruct H0.
+    rewrite H2 in *. contradiction.
 Qed.
 
 (* 4*. Zdefiniuj i udowodnij zasadę indukcji odzwierciedlającą schemat
