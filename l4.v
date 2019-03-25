@@ -237,6 +237,10 @@ Inductive redu : comb -> comb -> Prop :=
 | red_K : forall t s, redu (K · t · s) t
 | red_S : forall r s t, redu (S · r · s · t) (r · t · (s · t)).
 
+Notation "a ->p b" :=
+  (redu a b)
+  (at level 50, no associativity).
+
 (* Następnie zdefiniuj relację normalizacji jako zwrotno-przechodnie domknięcie
 relacji redukcji. *)
 
@@ -246,6 +250,10 @@ Inductive rt_clo {A : Set} (f : A -> A -> Prop) : A -> A -> Prop :=
 | rt_clo_t : forall a b c, f a b -> rt_clo f b c -> rt_clo f a c.
 
 Definition redu_t : comb -> comb -> Prop := rt_clo redu.
+
+Notation "a ->* b" :=
+  (redu_t a b)
+  (at level 50, no associativity).
 
 (* 3. Zdefiniuj typ danych reprezentujący typy proste z jednym typem bazowym. *)
 
@@ -268,5 +276,41 @@ Inductive comb_type : comb -> type -> Prop :=
 | type_app : forall M N A B, 
     comb_type M (A ~> B) -> comb_type N A -> comb_type (M · N) B.
 
+Notation "a : b" :=
+  (comb_type a b)
+  (at level 70, no associativity).
+
 (* 5. Udowodnij, że redukcja zachowuje typy (subject reduction). *)
 
+Lemma primitive_preservation : forall M N A, 
+  M : A -> 
+  M ->p N -> 
+  N : A.
+Proof.
+  intros.
+  induction H0.
+  - inversion H. clear H. subst.
+    inversion H2. clear H2. subst.
+    inversion H1. clear H1. subst.
+    assumption.
+  - inversion H. clear H. subst.
+    inversion H2. clear H2. subst. 
+    inversion H1. clear H1. subst.  
+    inversion H2. clear H2. subst.
+    apply type_app with (M := r · t) (N := s · t) (A := B).
+    + apply type_app with (A := A0); assumption.
+    + apply type_app with (A := A0); assumption.
+Qed.
+
+Lemma preservation : forall M N A,
+  M : A ->
+  M ->* N ->
+  N : A.
+Proof.
+  intros.
+  induction H0.
+  - assumption.
+  - clear H1.
+    apply IHrt_clo.
+    apply primitive_preservation with (M := a); assumption.
+Qed.
