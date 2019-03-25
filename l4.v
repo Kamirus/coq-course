@@ -112,7 +112,7 @@ Inductive monoid' {A:Type} (dot : A -> A -> A) (empty : A) : Prop :=
     forall a, dot empty a = a ->
     monoid' dot empty.
 
-    
+
 (* -------------------------------------------------------------------------- *)
 
 
@@ -120,20 +120,80 @@ Inductive monoid' {A:Type} (dot : A -> A -> A) (empty : A) : Prop :=
 
 (* 1. Zdefiniuj indukcyjny typ danych reprezentujący drzewa
 czerwono-czarne  *)
-(* rbtree : Set -> color -> nat -> Set *)
+Inductive color := black | red.
+
+Inductive rbtree (A : Set) : color -> nat -> Set :=
+| rb_e : rbtree A black 0
+| rb_r : forall h, rbtree A black h -> A -> rbtree A black h -> rbtree A red h
+| rb_b : forall h c c', rbtree A c h -> A -> rbtree A c' h -> rbtree A black (S h).
 
 (* taki, że typ rbtree A c h reprezentuje drzewa zawierające elementy
 typu A, których korzeń ma kolor c i głębokość czarnych węzłów h. *)
 
 (* 2. Zdefiniuj funkcję  *)
-(* depth : forall {A : Set} {c : color} {n : nat},
-(nat -> nat -> nat) -> rbtree A c n -> nat *)
+(* Fixpoint depth {A : Set} {c : color} {n : nat} *)
+Fixpoint depth {A : Set} {c : color} {n : nat}
+    (cmp : nat -> nat -> nat) (t : rbtree A c n) : nat :=
+  match t with
+  | rb_e _ => 0
+  | rb_r _ h tl _ tr => S (cmp (depth cmp tl) (depth cmp tr))
+  | rb_b _ _ _ _ tl _ tr => S (cmp (depth cmp tl) (depth cmp tr))
+  end.
 
 (* pozwalającą obliczyć maksymalną i minimalną głębokość drzewa, w
 zależności od tego, jaką funkcję podamy jako argument. *)
 
+Require Import Coq.Structures.GenericMinMax.
+
+SearchPattern (_ <= _ -> S _ <= S _).
+
 (* 3. Udowodnij własności  *)
-(* forall A c n (t : rbtree A c n), depth min t >= n  *)
+Goal forall A c n (t : rbtree A c n), depth min t >= n.
+Proof.
+  intros.
+  induction t; cbn; unfold ge in *; auto.
+  - apply le_S. apply Nat.min_glb_iff. split; assumption.
+  - apply le_n_S. apply Nat.min_glb_iff. split; assumption.
+Qed.
+
+Search (forall n m, n*m = m*n).
+Search (forall n, n + 1 = S n).
+Search (forall a b c, a + (b + c) = (a + b) + c).
+Check Nat.add_assoc.
+
+Lemma depth_max' : forall A c n (t : rbtree A c n),
+  match c with
+    | red => depth max t <= 2 * n + 1
+    | black => depth max t <= 2 * n
+  end.
+Proof.
+  intros.
+
+  assert (forall h, 2 * h = h + h). intro.
+  assert (h * 1 + h = h + h). auto with arith.
+  rewrite <- H.
+  rewrite mult_n_Sm.
+  rewrite Nat.mul_comm.
+  rewrite Nat.mul_comm.
+  reflexivity.
+
+  induction t; cbn; auto.
+  - rewrite Nat.add_0_r.
+    rewrite Nat.add_1_r.
+    apply le_n_S.
+    rewrite <- H.
+    apply Nat.max_lub_iff.
+    split; assumption.
+  - apply le_n_S.
+    assert (2 * h + 1 = h + S (h + 0)).
+      rewrite Nat.add_0_r.
+      rewrite <- Nat.add_1_r with (n := h).
+      rewrite Nat.add_assoc.
+      rewrite H. reflexivity.
+    rewrite <- H0.
+    case c, c'; apply Nat.max_lub_iff; split; auto with arith.
+Qed.
+
 (* forall A c n (t : rbtree A c n), depth max t <= 2*n + 1. *)
 
 (* 4**. Chcielibyśmy teraz napisać funkcję, która wstawia element do
