@@ -194,7 +194,16 @@ Proof.
     case c, c'; apply Nat.max_lub_iff; split; auto with arith.
 Qed.
 
-(* forall A c n (t : rbtree A c n), depth max t <= 2*n + 1. *)
+Goal forall A c n (t : rbtree A c n), depth max t <= 2 * n + 1.
+Proof.
+  intros.
+  cut (match c with
+    | red => depth max t <= 2 * n + 1
+    | black => depth max t <= 2 * n
+  end).
+  - induction c; auto with arith.
+  - apply depth_max'.
+Qed.
 
 (* 4**. Chcielibyśmy teraz napisać funkcję, która wstawia element do
 drzewa. Taka operacja może zepsuć własność drzewa czerwono-czarnego,
@@ -212,16 +221,40 @@ https://pdfs.semanticscholar.org/7756/16cf29e9c4e6d06e5999116f777e431cafa3.pdfs 
 (* 1. Zdefiniuj indukcyjny typ danych reprezentujący termy rachunku
 kombinatorów: https://pl.wikipedia.org/wiki/Rachunek_kombinatorów *)
 
+Inductive comb := S | K | app : comb -> comb -> comb.
+
+Notation "a · b" :=
+  (app a b)
+  (at level 61, left associativity).
+
 (* 2. Zdefiniuj redukcję na termach rachunku kombinatorów.  Podstawowy
 krok redukcji zdefiniowany jest przez reguły 
 K t s -> t 
 S r s t -> (r t) (s t)
 które można stosować w dowolnym podtermie danego termu. *)
 
+Inductive redu : comb -> comb -> Prop :=
+| red_K : forall t s, redu (K · t · s) t
+| red_S : forall r s t, redu (S · r · s · t) (r · t · (s · t)).
+
 (* Następnie zdefiniuj relację normalizacji jako zwrotno-przechodnie domknięcie
 relacji redukcji. *)
 
+(* refl_trans_closure *)
+Inductive rt_clo {A : Set} (f : A -> A -> Prop) : A -> A -> Prop :=
+| rt_clo_r : forall x, rt_clo f x x
+| rt_clo_t : forall a b c, f a b -> rt_clo f b c -> rt_clo f a c.
+
+Definition redu_t : comb -> comb -> Prop := rt_clo redu.
+
 (* 3. Zdefiniuj typ danych reprezentujący typy proste z jednym typem bazowym. *)
+
+(* t ::= a | t -> t *)
+Inductive type := alpha | appT : type -> type -> type.
+
+Notation "a ~> b" :=
+  (appT a b)
+  (at level 62, right associativity).
 
 (* 4. Zdefiniuj indukcyjny predykat, który przypisuje typy termom
 rachunku kombinatorów wg poniższych reguł:
@@ -229,6 +262,11 @@ K : A -> B -> A
 S : (A -> B -> C) -> (A -> B) -> (A -> C)
 M N : B jeśli M : A -> B i N : A
 *)
+Inductive comb_type : comb -> type -> Prop :=
+| type_K : forall A B, comb_type K (A ~> B ~> A)
+| type_S : forall A B C, comb_type S ((A ~> B ~> C) ~> (A ~> B) ~> (A ~> C))
+| type_app : forall M N A B, 
+    comb_type M (A ~> B) -> comb_type N A -> comb_type (M · N) B.
 
 (* 5. Udowodnij, że redukcja zachowuje typy (subject reduction). *)
 
