@@ -239,6 +239,8 @@ Reserved Notation "a ->p b"
 Inductive redu : comb -> comb -> Prop :=
 | red_K : forall t s, K · t · s ->p t
 | red_S : forall r s t, S · r · s · t ->p r · t · (s · t)
+| red_l : forall r r' s, r ->p r' -> r · s ->p r' · s
+| red_r : forall r s' s, s ->p s' -> r · s ->p r · s'
 where "a ->p b" := (redu a b).
 
 (* Następnie zdefiniuj relację normalizacji jako zwrotno-przechodnie domknięcie
@@ -260,7 +262,7 @@ Notation "a ->* b" :=
 (* t ::= a | t -> t *)
 Inductive type := alpha | appT : type -> type -> type.
 
-Notation "a ~> b" :=
+Notation "a => b" :=
   (appT a b)
   (at level 62, right associativity).
 
@@ -275,32 +277,42 @@ Reserved Notation "a : b"
   (at level 70, no associativity).
 
 Inductive comb_type : comb -> type -> Prop :=
-| type_K : forall A B, K : (A ~> B ~> A)
-| type_S : forall A B C, S : ((A ~> B ~> C) ~> (A ~> B) ~> (A ~> C))
-| type_app : forall M N A B, 
-    M : (A ~> B) -> N : A -> M · N : B
+| type_K : forall A B, K : (A => B => A)
+| type_S : forall A B C, S : ((A => B => C) => (A => B) => (A => C))
+| type_app : forall M N A B, M : (A => B) -> N : A -> M · N : B
 where "a : b" := (comb_type a b).
 
 (* 5. Udowodnij, że redukcja zachowuje typy (subject reduction). *)
 
 Lemma primitive_preservation : forall M N A, 
-  M : A -> 
   M ->p N -> 
+  M : A -> 
   N : A.
 Proof.
-  intros.
-  induction H0.
-  - inversion H. clear H. subst.
+  intros M N A H.
+  generalize A.
+  induction H.
+  - intros. 
+    inversion H. clear H. subst.
     inversion H2. clear H2. subst.
     inversion H1. clear H1. subst.
     assumption.
-  - inversion H. clear H. subst.
+  - intros.
+    inversion H. clear H. subst.
     inversion H2. clear H2. subst. 
     inversion H1. clear H1. subst.  
     inversion H2. clear H2. subst.
     apply type_app with (M := r · t) (N := s · t) (A := B).
-    + apply type_app with (A := A0); assumption.
-    + apply type_app with (A := A0); assumption.
+    + apply type_app with (A := A1); assumption.
+    + apply type_app with (A := A1); assumption.
+  - intros.
+    inversion H0. clear H0. subst.
+    apply IHredu in H3.
+    apply type_app with (A := A1); assumption.
+  - intros.
+    inversion H0. clear H0. subst.
+    apply IHredu in H5.
+    apply type_app with (A := A1); assumption.
 Qed.
 
 Lemma preservation : forall M N A,
