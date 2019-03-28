@@ -233,13 +233,13 @@ K t s -> t
 S r s t -> (r t) (s t)
 które można stosować w dowolnym podtermie danego termu. *)
 
-Inductive redu : comb -> comb -> Prop :=
-| red_K : forall t s, redu (K · t · s) t
-| red_S : forall r s t, redu (S · r · s · t) (r · t · (s · t)).
+Reserved Notation "a ->p b"
+  (at level 70, no associativity).
 
-Notation "a ->p b" :=
-  (redu a b)
-  (at level 50, no associativity).
+Inductive redu : comb -> comb -> Prop :=
+| red_K : forall t s, K · t · s ->p t
+| red_S : forall r s t, S · r · s · t ->p r · t · (s · t)
+where "a ->p b" := (redu a b).
 
 (* Następnie zdefiniuj relację normalizacji jako zwrotno-przechodnie domknięcie
 relacji redukcji. *)
@@ -270,15 +270,16 @@ K : A -> B -> A
 S : (A -> B -> C) -> (A -> B) -> (A -> C)
 M N : B jeśli M : A -> B i N : A
 *)
-Inductive comb_type : comb -> type -> Prop :=
-| type_K : forall A B, comb_type K (A ~> B ~> A)
-| type_S : forall A B C, comb_type S ((A ~> B ~> C) ~> (A ~> B) ~> (A ~> C))
-| type_app : forall M N A B, 
-    comb_type M (A ~> B) -> comb_type N A -> comb_type (M · N) B.
 
-Notation "a : b" :=
-  (comb_type a b)
+Reserved Notation "a : b"
   (at level 70, no associativity).
+
+Inductive comb_type : comb -> type -> Prop :=
+| type_K : forall A B, K : (A ~> B ~> A)
+| type_S : forall A B C, S : ((A ~> B ~> C) ~> (A ~> B) ~> (A ~> C))
+| type_app : forall M N A B, 
+    M : (A ~> B) -> N : A -> M · N : B
+where "a : b" := (comb_type a b).
 
 (* 5. Udowodnij, że redukcja zachowuje typy (subject reduction). *)
 
