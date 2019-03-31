@@ -48,8 +48,6 @@ Qed.
 Tej własności nie da się zapisać wprost w Coqu - w tym przypadku powstaje 
 problem z typowaniem równości inject (unject ls) = ls *)
 
-(* Lemma in_o_un_id : forall A l n, inject A (unject A n l) = l. *)
-
 (* Rozwiąż ten problem na dwa sposoby: *)
 (* a. *)
 (* Zdefiniuj własny typ równości na listach llist_eq,  *)
@@ -93,7 +91,7 @@ Lemma length_unject : forall A n l, length (unject A n l) = n.
 Proof.
   intros.
   induction l; cbn; auto.
-Qed.
+Defined.
 
 (* udowodnij, że dla wszystkich list zachodzi llist_eq (inject (unject ls)) ls *)
 Goal forall A n l, llist_eq (length (unject A n l)) n (inject A (unject A n l)) l.
@@ -107,6 +105,17 @@ Qed.
 
 (* b. Zdefiniuj funkcję, która wykonuje koercję elementów typu llist n do typu 
   llist (length (unject ls)) i wykorzystaj ją do sformułowania lematu. *)
+Definition llcoerce {A : Type} (n : nat) (l : @llist A n) : 
+  @llist A (length (unject A n l)).
+rewrite length_unject.
+refine (l).
+Defined.
+
+Lemma in_o_un_id : forall A n l, inject A (unject A n l) = llcoerce n l.
+Proof.
+  intros. induction l; cbn; auto.
+  - rewrite IHl. unfold llcoerce.
+Qed.
 
 (*** Zadanie 2 - 6p *)
 
