@@ -166,8 +166,12 @@ end.
 
 
 Obligation 2.
-intros; 
-split with h; auto.
+intros.
+cbn.
+exists h.
+reflexivity.
+(* split with h. *)
+(* auto. *)
 Qed.
 
 Print tail_spec_program.
@@ -241,6 +245,8 @@ Section Remove.
 Variable A : Type.
 Hypothesis eq_A_dec : forall (x y:A), {x = y} + {x <> y}.
 
+Locate "{ _ } + { _ }".
+
 Notation " x == y " := (eq_A_dec x y) (at level 90) : type_scope.
 
 Fixpoint remove (x:A) (l:list A) : list A :=
@@ -264,12 +270,10 @@ Defined.
 (* a co z taka specyfikacja: *)
 
 Fixpoint remove3 (x:A) (l: list A) : l <> [] -> list A :=
-(*
-match l return l <> [] -> list A with
+(* match l return l <> [] -> list A with
 | [] => fun p => nil_not_nil_F _ p
 | h::t => fun p => if h == x then remove3 x t _ else h::remove3 x t _
-end.
-*)
+end. *)
 match l with
 | [] => fun p => nil_not_nil_F _ p
 | h::t => match isnil_dec t with
@@ -293,6 +297,7 @@ end); eauto.
 Defined.
 
 Check List.remove.
+Print List.remove.
 
 Definition P : A -> list A -> list A -> Prop := 
 fun x l' l => l' = List.remove eq_A_dec x l.
@@ -386,7 +391,7 @@ Hint Constructors typing_j.
 
 Ltac solve_by_inversion :=
 match goal with
-| [ H : |- _ ::: _ |- _ ] => solve [inversion H; subst; auto]
+| [ H : (|- _ ::: _) |- _ ] => solve [inversion H; subst; auto]
 | _ => idtac
 end.
 
