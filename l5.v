@@ -116,7 +116,14 @@ Defined.
 Lemma in_o_un_id : forall A n l, inject A (unject A n l) = llcoerce n l.
 Proof.
   intros. induction l; cbn; auto.
-  - rewrite IHl. unfold llcoerce.
+  -
+    assert (length (unject A n l) = n).
+    apply length_unject.
+    rewrite <- H.
+    (* rewrite length_unject with (A := A) (n := n). *)
+    rewrite length_unject with (A := A) (n := n).
+    rewrite IHl.
+    unfold llcoerce.
 Qed.
 
 (*** Zadanie 2 - 6p *)
@@ -231,66 +238,20 @@ refine (
     * apply sorted_cons.
       apply ins_aux with (xs := xs) (n := n) (l := nxs); auto.
       auto.
+Defined.
 
-Fixpoint insert (n : nat) (l : list nat)
-  (e1 : {l' : list nat | Permutation l l' /\ sorted l'})
-  : {t : list nat | Permutation (n :: l) t /\ sorted t}.
-  (* match e1 with
-  | exist _ nil _ => exist _ (n :: nil) _
-  | exist _ (cons x xs) _ => 
-    match (is_le n x) with
-    | left n_le_x => exist _ (n :: x :: xs) _
-    | right _ => 
-      match insert n xs _ with
-      | exist _ xs' _ => exist _ (x :: xs') _ 
+Definition insertion_sort (l : list nat) : {l' : list nat | Permutation l l' /\ sorted l'}.
+refine (
+  fix ins_sort (l : list nat) : {l' : list nat | Permutation l l' /\ sorted l'} :=
+    match l return {l' : list nat | Permutation l l' /\ sorted l'} with
+    | nil => exist _ nil _
+    | cons x xs =>
+      match ins_sort xs in {xs' : list nat | Permutation xs xs' /\ sorted xs'} return {l' : list nat | Permutation (x :: xs') l' /\ sorted l'}
+      with
+      | exist _ xs' p => insert x xs' _
       end
     end
-  end. *)
-
-(* refine (
-  match e1 with
-  | exist _ l' p =>
-    match l' with
-    | nil => exist _ (n :: nil) _
-    | cons x xs => 
-      match (is_le n x) with
-      | left n_le_x => exist _ (n :: x :: xs) _
-      | right x_gt_n => 
-        match insert n xs _ with
-        | exist _ xs' _ => exist _ (x :: xs') _ 
-        end
-      end
-    end
-  end
-); cbn in p.
-- admit.
-- admit.  *)
-
-(* induction e1. destruct p. rename x into l'.
-induction l'.
-- exists (n :: nil). split. auto. apply sorted_one.
-- dependent destruction H. rename n0 into x.
-  induction (is_le n x); admit.
-- 
-  + refine (exist _ (n :: x :: l') _).
-    split. auto. apply sorted_cons; auto.
-  + induction (insert n l' _). *)
-
-induction e1. destruct p. rename x into l'.
-induction l'.
-- exists (n :: nil). split. auto. apply sorted_one.
-- rename a into x.
-  induction (is_le n x).
-  + refine (exist _ (n :: x :: l') _).
-    split. auto. apply sorted_cons; auto.
-  + induction (insert n l' _).
-
-Fixpoint insertion_sort (l : list nat) :
-  {l' : list nat | Permutation l l' /\ sorted l'} :=
-  match l with
-  | nil => exist _ nil _
-  | cons x xs => insert x (insertion_sort xs)
-  end.
+).
 
 (*** Zadanie 3 - 8p *)
 
