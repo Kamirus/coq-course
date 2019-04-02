@@ -31,9 +31,7 @@ Program Fixpoint unject (A : Type) (n : nat) : llist n -> list A :=
     end
   end.
 Obligations.
-Obligation 1.
-intros A n0 n H1 ll H H2. inversion H.
-  Qed.
+Obligation 1. intros A n0 n H1 ll H H2. inversion H. Qed.
 
 Search (forall xs xs' x, xs = xs' -> x :: xs = x :: xs').
 
@@ -264,8 +262,6 @@ typem option nat takich, że sorted_list None reprezentuje listę pustą,
 a sorted_list (Some n) jest typem list posortowanych rosnąco,
 których najmniejszym elementem jest n. *)
 
-Print List.
-
 (* 1. Zdefiniuj tak określony indukcyjny typ danych sorted_list. *)
 Inductive lift_le : nat -> option nat -> Prop :=
 | le_none : forall n, lift_le n None
@@ -275,7 +271,6 @@ Inductive sorted_list : option nat -> Set :=
 | sort_nil  : sorted_list None
 | sort_cons : forall x m, lift_le x m -> sorted_list m -> sorted_list (Some x)
 .
-
 Require Import Coq.Init.Datatypes.
 
 Definition min' (n : nat) (m : option nat) : option nat :=
@@ -284,7 +279,6 @@ Definition min' (n : nat) (m : option nat) : option nat :=
   | Some m => Some (min n m)
   end
 .
-
 (* 2. Napisz funkcję insert, która wstawia element do sorted_list. *)
 Program Fixpoint insert m n (l : sorted_list m) : sorted_list (min' n m) :=
   match l with
@@ -306,7 +300,6 @@ Next Obligation.
   apply le_some.
   apply Nat.min_glb; auto.
   Qed.
-
 
 Next Obligation. 
   intros. subst. cbn. 
