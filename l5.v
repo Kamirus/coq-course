@@ -264,9 +264,57 @@ typem option nat takich, że sorted_list None reprezentuje listę pustą,
 a sorted_list (Some n) jest typem list posortowanych rosnąco,
 których najmniejszym elementem jest n. *)
 
+Print List.
+
 (* 1. Zdefiniuj tak określony indukcyjny typ danych sorted_list. *)
+Inductive lift_le : nat -> option nat -> Prop :=
+| le_none : forall n, lift_le n None
+| le_some : forall n m, n <= m -> lift_le n (Some m)
+.
+Inductive sorted_list : option nat -> Set :=
+| sort_nil  : sorted_list None
+| sort_cons : forall x m, lift_le x m -> sorted_list m -> sorted_list (Some x)
+.
+
+Require Import Coq.Init.Datatypes.
+
+Definition min' (n : nat) (m : option nat) : option nat :=
+  match m with
+  | None => Some n
+  | Some m => Some (min n m)
+  end
+.
 
 (* 2. Napisz funkcję insert, która wstawia element do sorted_list. *)
+Program Fixpoint insert m n (l : sorted_list m) : sorted_list (min' n m) :=
+  match l with
+  | sort_nil => sort_cons n None (le_none n) sort_nil
+  | sort_cons x m lift_le_x_m xs => 
+    match is_le n x with
+    | left  n_le_x => sort_cons n (Some x) (le_some n x n_le_x) l
+    | right n_gt_x => sort_cons x _ _ (insert _ n xs)
+    end
+  end
+.
+Obligations.
+Next Obligation. intros. subst. cbn. rewrite min_l; auto. Qed.
+Next Obligation. 
+  intros. subst.
+  unfold gt in n_gt_x. rename n_gt_x into p. clear Heq_anonymous. apply Nat.lt_le_incl in p.
+  inversion lift_le_x_m; subst; cbn; auto.
+  apply le_some; auto.
+  apply le_some.
+  apply Nat.min_glb; auto.
+  Qed.
+
+
+Next Obligation. 
+  intros. subst. cbn. 
+  assert (min n x = x).
+  unfold gt in n_gt_x. clear Heq_anonymous. apply Nat.lt_le_incl in n_gt_x.
+  apply Nat.min_r; auto.
+  rewrite H. reflexivity.
+  Qed.
 
 (* 3. Dowolną listę posortowaną rosnąco określa para złożona z indeksu x i listy
 typu sorted_list x. Napisz specyfikację funkcji insertion_sort przy użyciu tego
