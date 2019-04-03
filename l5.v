@@ -57,22 +57,22 @@ Inductive llist_eq {A : Type} : forall n m, @llist A n -> @llist A m -> Prop :=
 | eq_cons : forall n m x xs ys, n = m ->
   llist_eq n m xs ys -> llist_eq (S n) (S m) (lcons n x xs) (lcons m x ys).
 
+Hint Constructors llist_eq.
+
 (* udowodnij, że jest to relacja równoważności; *)
 
 Goal forall A n l, @llist_eq A n n l l.
 Proof.
-  intros.
-  induction l.
-  - apply eq_nil.
-  - apply eq_cons; auto.
+  intros. induction l; auto.
+  (* - apply eq_nil.
+  - apply eq_cons; auto. *)
   Qed.
 
 Goal forall A n m xs ys, @llist_eq A n m xs ys -> @llist_eq A m n ys xs.
 Proof.
-  intros.
-  induction H.
-  - apply eq_nil.
-  - apply eq_cons; auto.
+  intros. induction H; auto.
+  (* - apply eq_nil.
+  - apply eq_cons; auto. *)
   Qed.
 
 Require Import Program.Equality.
@@ -89,9 +89,8 @@ Proof.
 
 Lemma length_unject : forall A n l, length (unject A n l) = n.
 Proof.
-  intros.
-  induction l; cbn; auto.
-Defined.
+  intros. induction l; cbn; auto.
+  Qed.
 
 (* udowodnij, że dla wszystkich list zachodzi llist_eq (inject (unject ls)) ls *)
 Goal forall A n l, llist_eq (length (unject A n l)) n (inject A (unject A n l)) l.
@@ -171,23 +170,10 @@ Proof.
   dependent induction H.
   - cbn. auto.
   - cbn. auto.
-  - assert (x :: xs = x :: xs). auto.
-    apply IHPermutation2 in H1.
+  - assert (x :: xs = x :: xs). auto. apply IHPermutation2 in H1.
+    (* ^ jak zrobić bez assert? *)
     apply Permutation_sym in H.
     apply Permutation_in with (l := l'); auto.
-  Qed.
-
-Lemma ins_aux : forall x xs 
-  , sorted (x :: xs)
-  -> forall n a l, sorted (a :: l)
-  -> x < n
-  -> Permutation (n :: xs) (a :: l)
-  -> x <= a.
-Proof.
-  intros.
-  apply perm_in in H2. cbn in H2. destruct H2.
-  - rewrite <- H2. auto with arith.
-  - apply sort_impl_hd_le with (xs := xs); auto.
   Qed.
 
 Fixpoint ins (n : nat) (l : list nat) :=
@@ -241,7 +227,14 @@ Proof.
       induction (ins x l).
       * apply sorted_one.
       * apply sorted_cons; auto.
-        apply ins_aux with (xs := l) (a := a0) (l := l0) (x := a) (n := x); auto.
+        clear IHl0.
+        (* Permutation (x :: l) (a0 :: l0) *)
+        apply perm_in with (xs := l0) in H1. (* więc a0 in x :: l *)
+        cbn in H1. destruct H1. (* a0 = x \/ a0 in l *)
+        { (* a <= x = a0 *) rewrite <- H1. auto with arith. }
+        { (* a <= list l  /\  a0 in l  ->  a <= a0 *) 
+          apply sort_impl_hd_le with (xs := l); assumption.
+        }
   Qed.
 
 Lemma sorted_ins_sort : forall l, sorted (ins_sort l).
