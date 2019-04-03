@@ -305,3 +305,42 @@ Next Obligation.
 (* 3. Dowolną listę posortowaną rosnąco określa para złożona z indeksu x i listy
 typu sorted_list x. Napisz specyfikację funkcji insertion_sort przy użyciu tego
 typu oraz zdefiniuj tę funkcję. *)
+
+Definition list_min (l : list nat) : option nat := fold_right min' None l.
+
+Definition faked_insert_sort (l : list nat) : sorted_list (list_min l) := 
+  match list_min l with
+  | None => sort_nil
+  | Some m => sort_cons m _ (le_none m) sort_nil
+  end
+.
+Fixpoint sorted_to_list m (l : sorted_list m) : list nat :=
+  match l with
+  | sort_nil => nil
+  | sort_cons x m _ xs => x :: sorted_to_list m xs
+  end
+.
+Fixpoint insort (l : list nat) : sorted_list (list_min l) :=
+  match l with
+  | nil     => sort_nil
+  | x :: xs => insert _ x (insort xs)
+  end
+.
+Lemma perm_insert : forall m n l, 
+  Permutation (n :: (sorted_to_list _ l)) (sorted_to_list _ (insert m n l)).
+Proof.
+  intros. induction l; cbn; auto.
+  induction (is_le n x); cbn.
+  + 
+  Qed.
+
+Lemma perm_insort : forall l, Permutation l (sorted_to_list _ (insort l)).
+Proof.
+  induction l; cbn; auto.
+  
+  Qed.
+Admitted.
+
+Program Definition insert_sort (l : list nat) : 
+  { l' : sorted_list (list_min l) | Permutation l (sorted_to_list _ l') } :=
+  exist _ (insort l) (perm_insort l).
