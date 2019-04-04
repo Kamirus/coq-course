@@ -341,6 +341,13 @@ Proof.
   Qed.
 Admitted.
 
-Program Definition insert_sort (l : list nat) : 
+Definition insert_sort (l : list nat) : 
   { l' : sorted_list (list_min l) | Permutation l (sorted_to_list _ l') } :=
   exist _ (insort l) (perm_insort l).
+
+Fixpoint insert_sort'' (l : list nat) : sorted_list (list_min l) := 
+  match l with
+  | nil => sort_nil
+  | x :: xs => insert _ x (insert_sort'' xs)
+  end
+.
