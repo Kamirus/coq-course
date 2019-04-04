@@ -269,7 +269,11 @@ Require Import Coq.Init.Datatypes.
 Definition min' (n : nat) (m : option nat) : option nat :=
   match m with
   | None => Some n
-  | Some m => Some (min n m)
+  | Some m => 
+    match is_le n m with
+    | left _ => Some n
+    | right _ => Some m
+    end
   end
 .
 (* 2. Napisz funkcję insert, która wstawia element do sorted_list. *)
@@ -284,24 +288,20 @@ Program Fixpoint insert m n (l : sorted_list m) : sorted_list (min' n m) :=
   end
 .
 Obligations.
-Next Obligation. intros. subst. cbn. rewrite min_l; auto. Qed.
+Next Obligation. intros. subst. cbn. induction (is_le n x); auto. 
+  assert (~ (n <= x)). auto with arith. contradiction. Qed.
 Next Obligation. 
   intros. subst.
   unfold gt in n_gt_x. rename n_gt_x into p. clear Heq_anonymous. apply Nat.lt_le_incl in p.
   inversion lift_le_x_m; subst; cbn; auto.
   apply le_some; auto.
-  apply le_some.
-  apply Nat.min_glb; auto.
+  induction (is_le n m0); apply le_some; auto.
   Qed.
-
 Next Obligation. 
-  intros. subst. cbn. 
-  assert (min n x = x).
-  unfold gt in n_gt_x. clear Heq_anonymous. apply Nat.lt_le_incl in n_gt_x.
-  apply Nat.min_r; auto.
-  rewrite H. reflexivity.
+  intros. subst. cbn.
+  induction (is_le n x); auto.
+  assert (~ (n <= x)). auto with arith. contradiction.
   Qed.
-
 (* 3. Dowolną listę posortowaną rosnąco określa para złożona z indeksu x i listy
 typu sorted_list x. Napisz specyfikację funkcji insertion_sort przy użyciu tego
 typu oraz zdefiniuj tę funkcję. *)
@@ -326,12 +326,19 @@ Fixpoint insort (l : list nat) : sorted_list (list_min l) :=
   | x :: xs => insert _ x (insort xs)
   end
 .
+Require Import ProofIrrelevance.
+Print eq_rect_eq.
+
 Lemma perm_insert : forall m n l, 
   Permutation (n :: (sorted_to_list _ l)) (sorted_to_list _ (insert m n l)).
 Proof.
   intros. induction l; cbn; auto.
   induction (is_le n x); cbn.
-  + 
+  + assert (Some n = min' n (Some x)). cbn.
+    rewrite <- eq_rect_eq with (p := Some n) (Q := fun H : option nat => sorted_list H)
+    (x := (sort_cons n (Some x) (le_some n x a) (sort_cons x m l l0)))
+    (h := (insert_obligation_2 (Some x) n (sort_cons x m l l0) x m l l0 eq_refl
+           JMeq_refl a)).
   Qed.
 
 Lemma perm_insort : forall l, Permutation l (sorted_to_list _ (insort l)).
