@@ -329,7 +329,7 @@ Fixpoint insort (l : list nat) : sorted_list (list_min l) :=
 Require Import ProofIrrelevance.
 Print eq_rect_eq.
 
-Lemma perm_insert : forall m n l, 
+(* Lemma perm_insert : forall m n l, 
   Permutation (n :: (sorted_to_list _ l)) (sorted_to_list _ (insert m n l)).
 Proof.
   intros. induction l; cbn; auto.
@@ -339,13 +339,13 @@ Proof.
     (x := (sort_cons n (Some x) (le_some n x a) (sort_cons x m l l0)))
     (h := (insert_obligation_2 (Some x) n (sort_cons x m l l0) x m l l0 eq_refl
            JMeq_refl a)).
-  Qed.
+  Qed. *)
 
 Lemma perm_insort : forall l, Permutation l (sorted_to_list _ (insort l)).
-Proof.
+(* Proof.
   induction l; cbn; auto.
   
-  Qed.
+  Qed. *)
 Admitted.
 
 Definition insert_sort (l : list nat) : 
