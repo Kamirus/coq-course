@@ -46,8 +46,7 @@ Reserved Notation " t ==> t' " (at level 80).
 
 (* semantyka naturalna wyrazen *)
 Inductive evalR : forall {t}, exp t -> interpret_tp t -> Prop :=
-| re_num : forall n, 
-           #n ==> n
+| re_num : forall n, #n ==> n
 | re_add : forall a1 a2 n1 n2, 
            a1 ==> n1 -> a2 ==> n2 ->
            a1 + a2 ==> (n1 + n2)%nat
@@ -88,7 +87,8 @@ Require Import Coq.Program.Equality.
 
 
 Lemma evalR_add : 
-forall (e1 e2: exp Nat) (n1 n2:nat), evalR e1 n1 -> evalR e2 n2 -> evalR (e1 + e2) ((n1 + n2)%nat).
+forall (e1 e2: exp Nat) (n1 n2:nat),
+  evalR e1 n1 -> evalR e2 n2 -> evalR (e1 + e2) ((n1 + n2)%nat).
 (* induction e1. *)
 dependent induction e1; intros; constructor; trivial.
 Qed.
