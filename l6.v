@@ -91,7 +91,8 @@ Require Import ZArith.
 Require Import Peano.
 
 (*** Zadanie 2 - 8p ***)
-Parameter var : Set.
+(* Parameter var : Set. *)
+Inductive var := vr : nat -> var.
 
 (* Sformalizuj semantykę naturalną prostego języka imperatywnego.
 Dowody twierdzeń powinny być możliwie zautomatyzowane. 
@@ -134,10 +135,64 @@ Hint Constructors Bexp.
 Hint Constructors Com.
 
 (* 1. Zdefiniuj funkcje ewaluacji wyrażeń arytmetycznych aeval i logicznych beval. *)
-
-
+Fixpoint aeval (a : Aexp) (q : var -> Z) : Z :=
+  match a with
+  | Anat z => z
+  | Avar x => q x
+  | Abin a1 op a2 => 
+    let z1 := aeval a1 q in
+    let z2 := aeval a2 q in 
+    match op with
+    | Add => z1 + z2
+    | Sub => z1 - z2
+    | Mul => z1 * z2
+    end
+  end
+.
+Fixpoint beval (b : Bexp) (q : var -> Z) : bool :=
+  match b with
+  | Blit t => t
+  | Brel a1 Eq a2 => Z.eqb (aeval a1 q) (aeval a2 q)
+  | Brel a1 Le a2 => Z.leb (aeval a1 q) (aeval a2 q)
+  | Bnot b1 => negb (beval b1 q)
+  | Bbin b1 And b2 => andb (beval b1 q) (beval b2 q)
+  | Bbin b1 Or b2 => orb (beval b1 q) (beval b2 q)
+  end
+.
+Lemma var_eq_dec : forall x y : var, {x = y} + {x <> y}.
+Admitted.
+Definition update (q : var -> Z) x z := fun y => 
+  match var_eq_dec x y with
+  | left _  => z 
+  | right _ => q y
+  end
+.
 (* 2. Zdefiniuj relację ceval implementującą standardową semantykę naturalną instrukcji. *)
-
+Inductive ceval : Com -> (var -> Z) -> (var -> Z) -> Prop :=
+| cskip : forall q, ceval Cskip q q
+| cassign : forall x a q, ceval (Cassign x a) q (update q x (aeval a q))
+| cseq : forall c1 c2 q q' q'', 
+         ceval c1 q   q'' ->
+         ceval c1 q'' q'  ->
+         ceval (Cseq c1 c2) q q'
+| cif_t : forall b q q' c1 c2, 
+          beval b q = true ->
+          ceval c1 q q' ->
+          ceval (Cif b c1 c2) q q'
+| cif_f : forall b q q' c1 c2, 
+          beval b q = false ->
+          ceval c2 q q' ->
+          ceval (Cif b c1 c2) q q'
+| cwhile_f : forall b c q, 
+             beval b q = false ->
+             ceval (Cwhile b c) q q
+| cwhile_t : forall b c q q' q'', 
+             beval b q = true ->
+             ceval c q q'' ->
+             ceval (Cwhile b c) q'' q' ->
+             ceval (Cwhile b c) q q'
+.
+Hint Constructors ceval.
 (* 3. Zdefiniuj predykat no_loop spełniony przez te i tylko te instrukcje, 
    które nie zawierają konstrukcji while. *)
 
