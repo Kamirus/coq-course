@@ -28,58 +28,48 @@ Ltac arg_tp f :=
   | _ => fail
   end.
 
-
-(* Ltac guardEq a b := 
-match (a = b) with
-| False => fail
-| True => idtac
-end.
-  if (a == b) then idtac else fail
-.*)
-
-Ltac guard_neq_nat a b :=
-match a with
-| 0 => match b with 
-       | 0 => fail
-       | S _ => idtac
-       end
-| S ?x => match b with
-         | 0 => idtac
-         | S ?y => guard_neq_nat x y
-         end
-end
+Ltac not_in h l :=
+  match l with
+  | nil => idtac
+  | h :: _ => fail 1
+  | _ :: ?xs => not_in h xs
+  end
 .
-Ltac not_in l a :=
-match l with
-| nil => idtac
-| cons ?x ?xs => guard_neq_nat a x; not_in xs a
-end
-.
-Goal forall n : nat, True.
+Goal forall x y : nat, True.
 Proof.
   intros.
-  not_in (@nil nat) 1.
-  not_in [2] 1.
-  not_in [2;3] 1.
-  (* not_in [n] 1. *)
-
-Ltac map f v acc :=
+  not_in x [1].
+  not_in x [y].
+  (* not_in x [x]. *)
+  auto.
+  Qed.
+Ltac map' f v :=
   let tp := arg_tp f in
   match goal with
-  | [ H : _ |- _ ] => let Htp := type of H in idtac H;
-                     (not_in v H; map f (cons H v) (cons (f H) acc)) || acc
-  | _ => acc
+  (* | [ H : _ |- _ ] => idtac acc; not_in H v; map' f (cons H v) (cons (f H) acc) *)
+  (* | _ => constr:(acc) *)
+  | [ H : _ |- _ ] => 
+    (* idtac v; *)
+    not_in H v; 
+    (* idtac H; *)
+    let v' := constr:(cons H v) in
+    let x := constr:(f H) in
+    (* let res := map' f v' in *)
+    (* idtac res; *)
+    (* idtac H; *)
+    let xd := constr:(x :: nil) in xd
+  (* | _ =>  constr:(@nil tp) *)
   end
 .
 
 Goal forall (x y : nat) (z : bool), True.
 Proof.
   intros.
-  let tp := arg_tp (fun x => x+1) in idtac tp.
   (* map constr:(fun x => x+1) constr:nil constr:nil *)
-  let a0 := map (fun x => x+1) (@nil nat) (@nil nat) in
+  (* let a0 := map' (fun x => x+1) (@nil nat) (@nil nat) in *)
+  let a0 := map' (fun x : nat => x) (@nil nat) in
     idtac a0.
-  Abort.
+  Abort.1
   auto.
 Qed.
 End Z1.
