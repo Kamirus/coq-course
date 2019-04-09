@@ -58,7 +58,7 @@ Ltac map' f v :=
     (* idtac res; *)
     (* idtac H; *)
     let xd := constr:(x :: nil) in xd
-  (* | _ =>  constr:(@nil tp) *)
+  | _ =>  constr:(@nil tp)
   end
 .
 
@@ -69,9 +69,7 @@ Proof.
   (* let a0 := map' (fun x => x+1) (@nil nat) (@nil nat) in *)
   let a0 := map' (fun x : nat => x) (@nil nat) in
     idtac a0.
-  Abort.1
-  auto.
-Qed.
+  Abort.
 End Z1.
 
 Section Z2.
@@ -81,8 +79,7 @@ Require Import ZArith.
 Require Import Peano.
 
 (*** Zadanie 2 - 8p ***)
-(* Parameter var : Set. *)
-Inductive var := vr : nat -> var.
+Parameter var : Set.
 
 (* Sformalizuj semantykę naturalną prostego języka imperatywnego.
 Dowody twierdzeń powinny być możliwie zautomatyzowane. 
