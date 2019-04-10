@@ -80,6 +80,7 @@ Require Import Peano.
 
 (*** Zadanie 2 - 8p ***)
 Parameter var : Set.
+Hypothesis var_eq_dec : forall x y : var, {x = y} + {x <> y}.
 
 (* Sformalizuj semantykę naturalną prostego języka imperatywnego.
 Dowody twierdzeń powinny być możliwie zautomatyzowane. 
@@ -146,8 +147,6 @@ Fixpoint beval (b : Bexp) (q : var -> Z) : bool :=
   | Bbin b1 Or b2 => orb (beval b1 q) (beval b2 q)
   end
 .
-Lemma var_eq_dec : forall x y : var, {x = y} + {x <> y}.
-Admitted.
 Definition update (q : var -> Z) x z := fun y => 
   match var_eq_dec x y with
   | left _  => z 
@@ -160,7 +159,7 @@ Inductive ceval : Com -> (var -> Z) -> (var -> Z) -> Prop :=
 | cassign : forall x a q, ceval (Cassign x a) q (update q x (aeval a q))
 | cseq : forall c1 c2 q q' q'', 
          ceval c1 q   q'' ->
-         ceval c1 q'' q'  ->
+         ceval c2 q'' q'  ->
          ceval (Cseq c1 c2) q q'
 | cif_t : forall b q q' c1 c2, 
           beval b q = true ->
@@ -180,12 +179,37 @@ Inductive ceval : Com -> (var -> Z) -> (var -> Z) -> Prop :=
              ceval (Cwhile b c) q q'
 .
 Hint Constructors ceval.
+
 (* 3. Zdefiniuj predykat no_loop spełniony przez te i tylko te instrukcje, 
    które nie zawierają konstrukcji while. *)
+Inductive no_loop : Com -> Prop :=
+| no_loop_skip : no_loop Cskip
+| no_loop_assign : forall x a, no_loop (Cassign x a)
+| no_loop_seq : forall c1 c2, no_loop c1 -> no_loop c2 -> no_loop (Cseq c1 c2)
+| no_loop_if : forall b c1 c2, no_loop c1 -> no_loop c2 -> no_loop (Cif b c1 c2)
+.
 
 (* Udowodnij, że każda instrukcja spełniająca ten predykat zatrzymuje się. *)
+Lemma no_loop_terminate : forall c, no_loop c -> forall q, exists q', ceval c q q'.
+Proof.
+  intros c H. induction H; intros.
+  - exists q. auto.
+  - exists (update q x (aeval a q)). auto.
+  - destruct IHno_loop1 with (q := q). rename x into q''.
+    destruct IHno_loop2 with (q := q''). rename x into q'.
+    exists q'. apply cseq with (q'' := q''); auto.
+  - remember (beval b q) as t eqn:Ht. apply eq_sym in Ht.
+    induction t.
+    + destruct IHno_loop1 with (q := q). exists x. auto.
+    + destruct IHno_loop2 with (q := q). exists x. auto.
+  Qed.
+Require Import Coq.Program.Equality.
 
 (* 4. Udowodnij, że pętla while true do skip nie zatrzymuje się. *)
+Goal forall q, ~ exists q', ceval (Cwhile (Blit true) Cskip) q q'.
+Proof.
+  intros. intro. destruct H. dependent induction H. auto.
+  Qed.
 
 (* 5. Udowodnij twierdzenie o niezmienniku pętli: *)
 Parameter P : state -> Prop.
