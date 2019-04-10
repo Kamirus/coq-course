@@ -109,11 +109,11 @@ Inductive Bexp :=
 | Bbin : Bexp -> Bop -> Bexp -> Bexp
 .
 Inductive Com := 
-| Cskip   : Com
-| Cassign : var -> Aexp -> Com
-| Cseq    : Com -> Com -> Com
-| Cif     : Bexp -> Com -> Com -> Com
-| Cwhile  : Bexp -> Com -> Com
+| skip   : Com
+| assign : var -> Aexp -> Com
+| seq    : Com -> Com -> Com
+| Cif    : Bexp -> Com -> Com -> Com
+| while  : Bexp -> Com -> Com
 .
 Hint Constructors Aop.
 Hint Constructors Aexp.
@@ -155,12 +155,12 @@ Definition update (q : var -> Z) x z := fun y =>
 .
 (* 2. Zdefiniuj relację ceval implementującą standardową semantykę naturalną instrukcji. *)
 Inductive ceval : Com -> (var -> Z) -> (var -> Z) -> Prop :=
-| cskip : forall q, ceval Cskip q q
-| cassign : forall x a q, ceval (Cassign x a) q (update q x (aeval a q))
+| cskip : forall q, ceval skip q q
+| cassign : forall x a q, ceval (assign x a) q (update q x (aeval a q))
 | cseq : forall c1 c2 q q' q'', 
          ceval c1 q   q'' ->
          ceval c2 q'' q'  ->
-         ceval (Cseq c1 c2) q q'
+         ceval (seq c1 c2) q q'
 | cif_t : forall b q q' c1 c2, 
           beval b q = true ->
           ceval c1 q q' ->
@@ -171,21 +171,21 @@ Inductive ceval : Com -> (var -> Z) -> (var -> Z) -> Prop :=
           ceval (Cif b c1 c2) q q'
 | cwhile_f : forall b c q, 
              beval b q = false ->
-             ceval (Cwhile b c) q q
+             ceval (while b c) q q
 | cwhile_t : forall b c q q' q'', 
              beval b q = true ->
              ceval c q q'' ->
-             ceval (Cwhile b c) q'' q' ->
-             ceval (Cwhile b c) q q'
+             ceval (while b c) q'' q' ->
+             ceval (while b c) q q'
 .
 Hint Constructors ceval.
 
 (* 3. Zdefiniuj predykat no_loop spełniony przez te i tylko te instrukcje, 
    które nie zawierają konstrukcji while. *)
 Inductive no_loop : Com -> Prop :=
-| no_loop_skip : no_loop Cskip
-| no_loop_assign : forall x a, no_loop (Cassign x a)
-| no_loop_seq : forall c1 c2, no_loop c1 -> no_loop c2 -> no_loop (Cseq c1 c2)
+| no_loop_skip : no_loop skip
+| no_loop_assign : forall x a, no_loop (assign x a)
+| no_loop_seq : forall c1 c2, no_loop c1 -> no_loop c2 -> no_loop (seq c1 c2)
 | no_loop_if : forall b c1 c2, no_loop c1 -> no_loop c2 -> no_loop (Cif b c1 c2)
 .
 
@@ -206,25 +206,32 @@ Proof.
 Require Import Coq.Program.Equality.
 
 (* 4. Udowodnij, że pętla while true do skip nie zatrzymuje się. *)
-Goal forall q, ~ exists q', ceval (Cwhile (Blit true) Cskip) q q'.
+Goal forall q, ~ exists q', ceval (while (Blit true) skip) q q'.
 Proof.
   intros. intro. destruct H. dependent induction H. auto.
   Qed.
 
 (* 5. Udowodnij twierdzenie o niezmienniku pętli: *)
+Definition state := var -> Z.
 Parameter P : state -> Prop.
 
-(* Theorem while_invariant :
-forall (b:bexp) (c:command) (s s’:state),
-(forall s s’:state, P s -> beval b s = true -> ceval s c s’ -> P s’) ->
-P s -> ceval s (while b c) s’ -> P s’ /\ beval b s’ = false. *)
+Theorem while_invariant :
+  forall (b:Bexp) (c:Com) (s s':state),
+  (forall s s':state, P s -> beval b s = true -> ceval c s s' -> P s') ->
+  P s -> ceval (while b c) s s' -> P s' /\ beval b s' = false.
+Proof.
+  intros.
+  dependent induction H1; auto.
+  assert (P q''). apply H with (s := s); auto.
+  apply IHceval2 with (s := q'') (c0 := c); auto.
+  Qed.
 
 (* 6. 
  * Nie możemy w Coqu zapisać relacji ceval jako funkcji,
  * ale możemy napisać taką funkcję ewaluacji instrukcji, 
  * która wykonuje tylko określoną, skończoną liczbę kroków zadaną jako argument.
  * Napisz taką funkcję
- * ceval_steps : command -> state -> nat -> option state
+ * ceval_steps : Com -> state -> nat -> option state
  * Funkcja powinna zwracać None w przypadku wyczerpania liczby kroków i 
  * (Some s) w przypadku normalnego zakończenia wykonania ze stanem s.
  *)
