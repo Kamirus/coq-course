@@ -235,7 +235,54 @@ Proof.
  * Funkcja powinna zwracać None w przypadku wyczerpania liczby kroków i 
  * (Some s) w przypadku normalnego zakończenia wykonania ze stanem s.
  *)
-
+Fixpoint ceval_steps C s N : option state :=
+  match N with
+  | 0 => None (* Some s *)
+  | S n => match C with
+           | skip => Some s
+           | assign x a => Some (update s x (aeval a s))
+           | seq c1 c2 => match ceval_steps c1 s n with
+                         | None => None
+                         | Some s' => ceval_steps c2 s' n
+                         end
+           | Cif b c1 c2 => match beval b s with
+                           | true  => ceval_steps c1 s n
+                           | false => ceval_steps c2 s n
+                           end
+           | while b c => match beval b s with
+                         | false => Some s
+                         | true  => match ceval_steps c s n with
+                                   | None => None
+                                   | Some s' => ceval_steps C s' n
+                                   end
+                         end
+           end
+  end
+.
+(* Fixpoint ceval_steps C s N : option state * nat :=
+  match N with
+  | 0 => (None, 0) (* Some s *)
+  | S n => match C with
+           | skip => (Some s, n)
+           | assign x a => (Some (update s x (aeval a s)), n)
+           | seq c1 c2 => match ceval_steps c1 s n with
+                         | (None, _) => (None, 0)
+                         | (Some s', n') => ceval_steps c2 s' n'
+                         end
+           | Cif b c1 c2 => match beval b s with
+                           | true  => ceval_steps c1 s n
+                           | false => ceval_steps c2 s n
+                           end
+           | while b c => match beval b s with
+                         | false => (Some s, n)
+                         | true  => match ceval_steps c s n with
+                                   | (None, _) => (None, 0)
+                                   | (Some s', n') => ceval_steps C s' n'
+                                   end
+                         end
+           end
+  end
+. *)
 (* 7. Udowodnij własność: *)
 (* forall c s s', ceval c s s' <-> (exists i, ceval_steps c s i = Some s'). *)
 
