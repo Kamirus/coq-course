@@ -283,7 +283,123 @@ Fixpoint ceval_steps C s N : option state :=
            end
   end
 . *)
+Search (forall a b, max a b = a \/ max a b = b).
+Check (Nat.max_dec).
+Lemma while_steps : forall b c s k x,
+  ceval_steps (while b c) s k     = Some x ->
+  ceval_steps (while b c) s (S k) = Some x.
+Proof.
+  intros. cbn.
+  remember (beval b s).
+  dependent induction b0.
+  - remember (ceval_steps c s k).
+    dependent induction o.
+    + induction k. auto. cbn.
+    + induction k. auto. cbn in H. rewrite <- Heqb0 in H. admit.
+  - induction k. inversion H. cbn in H. rewrite <- Heqb0 in H. auto.
+  Qed.
+
+Lemma seq_steps : forall c1 c2 s k x,
+  ceval_steps (seq c1 c2) s k = Some x ->
+  exists k' s',
+  S k' = k /\ ceval_steps c1 s k' = Some s' /\ ceval_steps c2 s' k' = Some x.
+Proof.
+  intros c1 c2 s k x H.
+  dependent induction k. inversion H.
+  cbn in *.
+  remember (ceval_steps c1 s k) eqn:Ho.
+  dependent induction o. 
+  + exists k. exists a. auto.
+  + inversion H.
+  Qed.
+
+Ltac destruct_conj_exists := 
+  match goal with
+  | [ H : _ /\ _ |- _ ] => destruct H; destruct_conj_exists
+  | [ H : exists _, _ |- _ ] => destruct H; destruct_conj_exists
+  | _ => idtac
+  end
+.
+Ltac apply_seq_steps h := 
+  apply seq_steps in h; destruct_conj_exists; subst; auto.
+
+Lemma succ_steps : forall c i s x,
+  ceval_steps c s i     = Some x ->
+  ceval_steps c s (S i) = Some x
+.
+Proof.
+  induction c; intros.
+  - induction i; auto; inversion H.
+  - induction i; auto; inversion H.
+  - cbn. apply_seq_steps H. apply IHc1 in H0. rewrite H0. auto.
+  - cbn. 
+    remember (beval b s) eqn:Hb0.
+    dependent induction b0;
+    dependent induction i; auto; cbn in H; rewrite <- Hb0 in H;
+    (apply IHc1 || apply IHc2); auto.
+  - cbn.
+    remember (beval b s) eqn:Hb0.
+    dependent induction b0.
+    dependent induction i; auto. cbn in H. rewrite <- Hb0 in H. auto.
+    remember (ceval_steps c s i) eqn:Ho.
+    dependent induction o. apply IHi in H as H1.
+    + apply eq_sym in Ho. apply IHc in Ho. rewrite Ho. cbn.
+      remember (beval b a) eqn:Hba.
+      dependent induction b0; auto.
+      induction i; inversion H. subst. rewrite <- Hba. auto.
+    + induction i; inversion H. cbn in H.
+      remember (beval b a). dependent induction b0; auto. admit.
+    + inversion H.
+    + admit.
+  Admitted.
+  (* Qed. *)
+Hint Resolve succ_steps.
+Lemma more_steps : forall i j,
+  i <= j -> 
+  forall c s x,
+  ceval_steps c s i = Some x ->
+  ceval_steps c s j = Some x
+.
+Proof.
+  intros i j H.
+  induction H; intros; auto.
+  (* apply succ_steps. apply IHle. 
+  induction c.
+  - induction i; auto; inversion H0.
+  - induction i; auto; inversion H0.
+  - cbn. apply IHle in H0.
+    induction m; auto.
+    cbn in H0. 
+    remember (ceval_steps c1 s m) eqn:Hc1.
+    case (o).
+    + admit.
+    + 
+    ceval_steps c1 s m. *)
+  Qed.
+Hint Resolve more_steps.
+
+Lemma ceval_to_steps : forall c s s', ceval c s s' -> exists i, ceval_steps c s i = Some s'.
+Proof.
+  intros c s s' H.
+  dependent induction H.
+  - exists 1. auto.
+  - exists 1. auto.
+  - destruct IHceval1. destruct IHceval2.
+    exists (1 + x + x0). cbn.
+    apply more_steps with (j := x + x0) in H1; auto with arith. rewrite H1.
+    apply more_steps with (i := x0); auto with arith.
+  - destruct IHceval.
+    exists (S x). cbn. rewrite H; auto.
+  - destruct IHceval.
+    exists (S x). cbn. rewrite H; auto.
+  - exists 1. cbn. rewrite H. auto.
+  - destruct IHceval1. destruct IHceval2.
+    exists (1 + x + x0). cbn. rewrite H.
+    apply more_steps with (j := x + x0) in H2; auto with arith. rewrite H2.
+    apply more_steps with (i := x0); auto with arith.
+  Qed.
+
 (* 7. Udowodnij własność: *)
-(* forall c s s', ceval c s s' <-> (exists i, ceval_steps c s i = Some s'). *)
+(* Goal forall c s s', ceval c s s' <-> exists i, ceval_steps c s i = Some s'. *)
 
 End Z2.
