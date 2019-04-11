@@ -189,6 +189,13 @@ Inductive no_loop : Com -> Prop :=
 | no_loop_if : forall b c1 c2, no_loop c1 -> no_loop c2 -> no_loop (Cif b c1 c2)
 .
 
+Ltac induction_rem h b Hb :=
+  remember h as b eqn:Hb; apply eq_sym in Hb; induction b;
+  match goal with
+  | [ H : _ |- _ ] => inversion H; trivial
+  | _ => idtac
+  end.
+
 (* Udowodnij, że każda instrukcja spełniająca ten predykat zatrzymuje się. *)
 Lemma no_loop_terminate : forall c, no_loop c -> forall q, exists q', ceval c q q'.
 Proof.
@@ -198,8 +205,7 @@ Proof.
   - destruct IHno_loop1 with (q := q). rename x into q''.
     destruct IHno_loop2 with (q := q''). rename x into q'.
     exists q'. apply cseq with (q'' := q''); auto.
-  - remember (beval b q) as t eqn:Ht. apply eq_sym in Ht.
-    induction t.
+  - induction_rem (beval b q) t Ht.
     + destruct IHno_loop1 with (q := q). exists x. auto.
     + destruct IHno_loop2 with (q := q). exists x. auto.
   Qed.
@@ -283,12 +289,6 @@ Fixpoint ceval_steps C s N : option state :=
            end
   end
 . *)
-Ltac induction_rem h b Hb :=
-  remember h as b eqn:Hb; apply eq_sym in Hb; induction b;
-  match goal with
-  | [ H : _ |- _ ] => inversion H; trivial
-  | _ => idtac
-  end.
 
 Lemma seq_steps : forall c1 c2 s k x,
   ceval_steps (seq c1 c2) s k = Some x ->
@@ -325,13 +325,10 @@ Proof.
     induction_rem (beval b s) b0 Hb0;
     dependent induction i; auto; cbn in H; rewrite Hb0 in H;
     (apply IHc1 || apply IHc2); auto.
-  - 
-    dependent induction i. cbn in H. inversion H.
+  - dependent induction i. cbn in H. inversion H.
     cbn in H.
-    remember (beval b s) eqn:Hb0.
-    dependent induction b0.
-    * 
-      remember (ceval_steps c s i) eqn:Ho. induction o.
+    remember (beval b s) eqn:Hb0. dependent induction b0.
+    * remember (ceval_steps c s i) eqn:Ho. induction o.
       (* induction_rem (ceval_steps c s i) o Ho. *)
       + apply IHi in H.
         apply eq_sym in Ho. apply IHc in Ho. 
