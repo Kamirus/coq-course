@@ -31,7 +31,7 @@ Ltac arg_tp f :=
 Ltac not_in h l :=
   match l with
   | nil => idtac
-  | h :: _ => fail 1
+  | h :: _ => fail 1 "assert not_in failed"
   | _ :: ?xs => not_in h xs
   end
 .
@@ -51,14 +51,18 @@ Ltac map' f v :=
   | [ H : _ |- _ ] => 
     (* idtac v; *)
     not_in H v; 
-    (* idtac H; *)
+    idtac H;
     let v' := constr:(cons H v) in
     let x := constr:(f H) in
+    idtac H;
     (* let res := map' f v' in *)
     (* idtac res; *)
     (* idtac H; *)
-    let xd := constr:(x :: nil) in xd
-  | _ =>  constr:(@nil tp)
+    let xd := constr:(x :: nil) in
+    idtac xd;
+    (* constr:(xd) *)
+    constr:(@nil tp)
+  (* | _ =>  constr:(@nil tp) *)
   end
 .
 
