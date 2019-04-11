@@ -335,8 +335,8 @@ Proof.
     remember (beval b s) eqn:Hb0.
     dependent induction b0.
     * 
-      remember (ceval_steps c s i) eqn:Ho.
-      dependent induction o.
+      remember (ceval_steps c s i) eqn:Ho. induction o.
+      (* induction_rem (ceval_steps c s i) o Ho. *)
       + apply IHi in H.
         apply eq_sym in Ho. apply IHc in Ho. 
         cut (
@@ -347,7 +347,7 @@ Proof.
             | None => None
             end
           else Some s) = Some x); auto.
-          rewrite <- Hb0. rewrite Ho. assumption.
+          rewrite <- Hb0 in *. rewrite Ho in *. auto.
       + inversion H.
     * cbn. rewrite <- Hb0. auto.
   Qed.
