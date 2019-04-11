@@ -283,22 +283,6 @@ Fixpoint ceval_steps C s N : option state :=
            end
   end
 . *)
-Search (forall a b, max a b = a \/ max a b = b).
-Check (Nat.max_dec).
-Lemma while_steps : forall b c s k x,
-  ceval_steps (while b c) s k     = Some x ->
-  ceval_steps (while b c) s (S k) = Some x.
-Proof.
-  intros. cbn.
-  remember (beval b s).
-  dependent induction b0.
-  - remember (ceval_steps c s k).
-    dependent induction o.
-    + induction k. auto. cbn.
-    + induction k. auto. cbn in H. rewrite <- Heqb0 in H. admit.
-  - induction k. inversion H. cbn in H. rewrite <- Heqb0 in H. auto.
-  Qed.
-
 Lemma seq_steps : forall c1 c2 s k x,
   ceval_steps (seq c1 c2) s k = Some x ->
   exists k' s',
@@ -337,22 +321,28 @@ Proof.
     dependent induction b0;
     dependent induction i; auto; cbn in H; rewrite <- Hb0 in H;
     (apply IHc1 || apply IHc2); auto.
-  - cbn.
+  - 
+    dependent induction i. cbn in H. inversion H.
+    cbn in H.
     remember (beval b s) eqn:Hb0.
     dependent induction b0.
-    dependent induction i; auto. cbn in H. rewrite <- Hb0 in H. auto.
-    remember (ceval_steps c s i) eqn:Ho.
-    dependent induction o. apply IHi in H as H1.
-    + apply eq_sym in Ho. apply IHc in Ho. rewrite Ho. cbn.
-      remember (beval b a) eqn:Hba.
-      dependent induction b0; auto.
-      induction i; inversion H. subst. rewrite <- Hba. auto.
-    + induction i; inversion H. cbn in H.
-      remember (beval b a). dependent induction b0; auto. admit.
-    + inversion H.
-    + admit.
-  Admitted.
-  (* Qed. *)
+    * 
+      remember (ceval_steps c s i) eqn:Ho.
+      dependent induction o.
+      + apply IHi in H.
+        apply eq_sym in Ho. apply IHc in Ho. 
+        cut (
+          (if beval b s
+          then
+            match ceval_steps c s (S i) with
+            | Some s' => ceval_steps (while b c) s' (S i)
+            | None => None
+            end
+          else Some s) = Some x); auto.
+          rewrite <- Hb0. rewrite Ho. assumption.
+      + inversion H.
+    * cbn. rewrite <- Hb0. auto.
+  Qed.
 Hint Resolve succ_steps.
 Lemma more_steps : forall i j,
   i <= j -> 
@@ -363,18 +353,6 @@ Lemma more_steps : forall i j,
 Proof.
   intros i j H.
   induction H; intros; auto.
-  (* apply succ_steps. apply IHle. 
-  induction c.
-  - induction i; auto; inversion H0.
-  - induction i; auto; inversion H0.
-  - cbn. apply IHle in H0.
-    induction m; auto.
-    cbn in H0. 
-    remember (ceval_steps c1 s m) eqn:Hc1.
-    case (o).
-    + admit.
-    + 
-    ceval_steps c1 s m. *)
   Qed.
 Hint Resolve more_steps.
 
