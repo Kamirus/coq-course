@@ -50,8 +50,8 @@ Ltac map' f v :=
   | [ H : _ |- _ ] => 
     let not_in := not_in H v in
     let v' := constr:(cons H v) in
-    let x := eval cbv beta in (f H) in
-    (* let x := eval cbv in (f H) in *)
+    (* let x := eval cbv beta in (f H) in *)
+    let x := eval compute in (f H) in
     let res := map' f v' in
     let res' := constr:(x :: res) in
     constr:(res')
@@ -67,7 +67,7 @@ Ltac map f :=
 Goal forall (x y : nat) (z : bool), True.
 Proof.
   intros.
-  let a0 := map (fun x : nat => x + 1) in
+  let a0 := map (fun x : nat => 1 + x) in
     idtac a0.
   Abort.
 End Z1.
