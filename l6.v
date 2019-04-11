@@ -376,6 +376,7 @@ Proof.
     apply more_steps with (j := x + x0) in H2; auto with arith. rewrite H2.
     apply more_steps with (i := x0); auto with arith.
   Qed.
+Hint Resolve ceval_to_steps.
 
 Lemma some_match : forall {A : Set} (y a : option A) (a' : A),
   match y with
@@ -414,6 +415,9 @@ Proof.
       apply IHc in H0. auto.
     + inversion H1. subst. apply cwhile_f. auto.
   Qed.
-(* Goal forall c s s', ceval c s s' <-> exists i, ceval_steps c s i = Some s'. *)
+Hint Resolve steps_to_ceval.
+
+Goal forall c s s', ceval c s s' <-> exists i, ceval_steps c s i = Some s'.
+Proof. intros. split; auto. Qed.
 
 End Z2.
