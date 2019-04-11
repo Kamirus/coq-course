@@ -307,6 +307,14 @@ Ltac destruct_conj_exists :=
 Ltac apply_seq_steps h := 
   apply seq_steps in h; destruct_conj_exists; subst; auto.
 
+Ltac induction_rem h b Hb :=
+  remember h as b eqn:Hb; apply eq_sym in Hb; induction b;
+  match goal with
+  | [ H : _ |- _ ] => inversion H; trivial
+  | _ => idtac
+  end.
+  (* remember (beval b s) as b0 eqn:Hb0. induction b0; apply eq_sym in Hb0. *)
+
 Lemma succ_steps : forall c i s x,
   ceval_steps c s i     = Some x ->
   ceval_steps c s (S i) = Some x
@@ -317,9 +325,9 @@ Proof.
   - induction i; auto; inversion H.
   - cbn. apply_seq_steps H. apply IHc1 in H0. rewrite H0. auto.
   - cbn. 
-    remember (beval b s) eqn:Hb0.
-    dependent induction b0;
-    dependent induction i; auto; cbn in H; rewrite <- Hb0 in H;
+    (* remember (beval b s) eqn:Hb0. dependent induction b0. *)
+    induction_rem (beval b s) b0 Hb0;
+    dependent induction i; auto; cbn in H; rewrite Hb0 in H;
     (apply IHc1 || apply IHc2); auto.
   - 
     dependent induction i. cbn in H. inversion H.
@@ -394,22 +402,20 @@ Proof.
   destruct H;
   generalize dependent s;
   induction x; intros; try (intros; inversion H; trivial).
-  - remember (ceval_steps c1 s x).
-    dependent induction o; try (inversion H1; trivial).
-    apply eq_sym in Heqo.
+  - induction_rem (ceval_steps c1 s x) o Heqo.
     assert (exists i, ceval_steps c1 s i = Some a). exists x. auto.
     assert (exists i, ceval_steps c2 a i = Some s'). exists x. auto.
     apply IHc1 in H0. apply IHc2 in H3. apply cseq with (q'' := a); auto.
   - cbn in *. clear H1.
-    remember (beval b s). dependent induction b0; apply eq_sym in Heqb0.
+    induction_rem (beval b s) b0 Hb0.
     + apply cif_t; auto.
       assert (exists x, ceval_steps c1 s x = Some s'). exists x. auto. apply IHc1 in H0.
       auto.
     + apply cif_f; auto.
       assert (exists x, ceval_steps c2 s x = Some s'). exists x. auto. apply IHc2 in H0.
       auto.
-  - remember (beval b s). dependent induction b0; apply eq_sym in Heqb0.
-    + remember (ceval_steps c s x). dependent induction o; try (inversion H1; trivial).
+  - induction_rem (beval b s) b0 Heqb0.
+    + induction_rem (ceval_steps c s x) o Ho.
       apply cwhile_t with (q'' := a); auto.
       assert (exists x, ceval_steps c s x = Some a). exists x. auto.
       apply IHc in H0. auto.
