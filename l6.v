@@ -399,7 +399,43 @@ Proof.
     apply more_steps with (i := x0); auto with arith.
   Qed.
 
+Lemma some_match : forall {A : Set} (y a : option A) (a' : A),
+  match y with
+  | Some _ => a
+  | None => None
+  end = Some a' -> a = Some a'.
+Proof.
+  intros. dependent induction y. auto. inversion H.
+  Qed.
+
 (* 7. Udowodnij własność: *)
+Lemma steps_to_ceval : forall c s s', (exists i, ceval_steps c s i = Some s') -> ceval c s s'.
+Proof.
+  induction c; intros s s' H;
+  destruct H;
+  generalize dependent s;
+  induction x; intros; try (intros; inversion H; trivial).
+  - remember (ceval_steps c1 s x).
+    dependent induction o; try (inversion H1; trivial).
+    apply eq_sym in Heqo.
+    assert (exists i, ceval_steps c1 s i = Some a). exists x. auto.
+    assert (exists i, ceval_steps c2 a i = Some s'). exists x. auto.
+    apply IHc1 in H0. apply IHc2 in H3. apply cseq with (q'' := a); auto.
+  - cbn in *. clear H1.
+    remember (beval b s). dependent induction b0; apply eq_sym in Heqb0.
+    + apply cif_t; auto.
+      assert (exists x, ceval_steps c1 s x = Some s'). exists x. auto. apply IHc1 in H0.
+      auto.
+    + apply cif_f; auto.
+      assert (exists x, ceval_steps c2 s x = Some s'). exists x. auto. apply IHc2 in H0.
+      auto.
+  - remember (beval b s). dependent induction b0; apply eq_sym in Heqb0.
+    + remember (ceval_steps c s x). dependent induction o; try (inversion H1; trivial).
+      apply cwhile_t with (q'' := a); auto.
+      assert (exists x, ceval_steps c s x = Some a). exists x. auto.
+      apply IHc in H0. auto.
+    + inversion H1. subst. apply cwhile_f. auto.
+  Qed.
 (* Goal forall c s s', ceval c s s' <-> exists i, ceval_steps c s i = Some s'. *)
 
 End Z2.
