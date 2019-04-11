@@ -283,18 +283,23 @@ Fixpoint ceval_steps C s N : option state :=
            end
   end
 . *)
+Ltac induction_rem h b Hb :=
+  remember h as b eqn:Hb; apply eq_sym in Hb; induction b;
+  match goal with
+  | [ H : _ |- _ ] => inversion H; trivial
+  | _ => idtac
+  end.
+
 Lemma seq_steps : forall c1 c2 s k x,
   ceval_steps (seq c1 c2) s k = Some x ->
   exists k' s',
   S k' = k /\ ceval_steps c1 s k' = Some s' /\ ceval_steps c2 s' k' = Some x.
 Proof.
   intros c1 c2 s k x H.
-  dependent induction k. inversion H.
+  induction k. inversion H.
   cbn in *.
-  remember (ceval_steps c1 s k) eqn:Ho.
-  dependent induction o. 
-  + exists k. exists a. auto.
-  + inversion H.
+  induction_rem (ceval_steps c1 s k) o Ho.
+  exists k. exists a. auto.
   Qed.
 
 Ltac destruct_conj_exists := 
@@ -307,14 +312,6 @@ Ltac destruct_conj_exists :=
 Ltac apply_seq_steps h := 
   apply seq_steps in h; destruct_conj_exists; subst; auto.
 
-Ltac induction_rem h b Hb :=
-  remember h as b eqn:Hb; apply eq_sym in Hb; induction b;
-  match goal with
-  | [ H : _ |- _ ] => inversion H; trivial
-  | _ => idtac
-  end.
-  (* remember (beval b s) as b0 eqn:Hb0. induction b0; apply eq_sym in Hb0. *)
-
 Lemma succ_steps : forall c i s x,
   ceval_steps c s i     = Some x ->
   ceval_steps c s (S i) = Some x
@@ -325,7 +322,6 @@ Proof.
   - induction i; auto; inversion H.
   - cbn. apply_seq_steps H. apply IHc1 in H0. rewrite H0. auto.
   - cbn. 
-    (* remember (beval b s) eqn:Hb0. dependent induction b0. *)
     induction_rem (beval b s) b0 Hb0;
     dependent induction i; auto; cbn in H; rewrite Hb0 in H;
     (apply IHc1 || apply IHc2); auto.
