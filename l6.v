@@ -43,35 +43,31 @@ Proof.
   (* not_in x [x]. *)
   auto.
   Qed.
+
 Ltac map' f v :=
   let tp := arg_tp f in
   match goal with
-  (* | [ H : _ |- _ ] => idtac acc; not_in H v; map' f (cons H v) (cons (f H) acc) *)
-  (* | _ => constr:(acc) *)
   | [ H : _ |- _ ] => 
-    (* idtac v; *)
-    not_in H v; 
-    idtac H;
+    let not_in := not_in H v in
     let v' := constr:(cons H v) in
-    let x := constr:(f H) in
-    idtac H;
-    (* let res := map' f v' in *)
-    (* idtac res; *)
-    (* idtac H; *)
-    let xd := constr:(x :: nil) in
-    idtac xd;
-    (* constr:(xd) *)
-    constr:(@nil tp)
-  (* | _ =>  constr:(@nil tp) *)
+    let x := eval cbv beta in (f H) in
+    (* let x := eval cbv in (f H) in *)
+    let res := map' f v' in
+    let res' := constr:(x :: res) in
+    constr:(res')
+  | _ =>  constr:(@nil tp)
   end
+.
+
+Ltac map f :=
+  let tp := arg_tp f in
+  map' f (@nil tp)
 .
 
 Goal forall (x y : nat) (z : bool), True.
 Proof.
   intros.
-  (* map constr:(fun x => x+1) constr:nil constr:nil *)
-  (* let a0 := map' (fun x => x+1) (@nil nat) (@nil nat) in *)
-  let a0 := map' (fun x : nat => x) (@nil nat) in
+  let a0 := map (fun x : nat => x + 1) in
     idtac a0.
   Abort.
 End Z1.
