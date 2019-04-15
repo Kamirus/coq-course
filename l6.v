@@ -53,8 +53,7 @@ Ltac map' f v :=
     (* let x := eval cbv beta in (f H) in *)
     let x := eval compute in (f H) in
     let res := map' f v' in
-    let res' := constr:(x :: res) in
-    constr:(res')
+    constr:(x :: res)
   | _ =>  constr:(@nil tp)
   end
 .
@@ -189,6 +188,15 @@ Inductive no_loop : Com -> Prop :=
 | no_loop_if : forall b c1 c2, no_loop c1 -> no_loop c2 -> no_loop (Cif b c1 c2)
 .
 
+Ltac destruct_conj_exists := 
+  match goal with
+  | [ H : _ /\ _ |- _ ] => destruct H; destruct_conj_exists
+  | [ H : exists _, _ |- _ ] => destruct H; destruct_conj_exists
+  (* | [ H : forall _, exists _, _ |- _ ] => edestruct H; clear H; destruct_conj_exists *)
+  | _ => idtac
+  end
+.
+
 Ltac induction_rem h b Hb :=
   remember h as b eqn:Hb; apply eq_sym in Hb; induction b;
   match goal with
@@ -199,16 +207,17 @@ Ltac induction_rem h b Hb :=
 (* Udowodnij, że każda instrukcja spełniająca ten predykat zatrzymuje się. *)
 Lemma no_loop_terminate : forall c, no_loop c -> forall q, exists q', ceval c q q'.
 Proof.
-  intros c H. induction H; intros.
-  - exists q. auto.
-  - exists (update q x (aeval a q)). auto.
-  - destruct IHno_loop1 with (q := q). rename x into q''.
-    destruct IHno_loop2 with (q := q''). rename x into q'.
-    exists q'. apply cseq with (q'' := q''); auto.
-  - induction_rem (beval b q) t Ht.
-    + destruct IHno_loop1 with (q := q). exists x. auto.
-    + destruct IHno_loop2 with (q := q). exists x. auto.
-  Qed.
+  intros c H. induction H; intros; destruct_conj_exists; eauto.
+  - edestruct IHno_loop1.
+    edestruct IHno_loop2.
+    eauto.
+  - induction_rem (beval b q) t Ht;
+    edestruct IHno_loop1; edestruct IHno_loop2; eauto.
+Unshelve.
+  assumption.
+  assumption.
+Qed.
+
 Require Import Coq.Program.Equality.
 
 (* 4. Udowodnij, że pętla while true do skip nie zatrzymuje się. *)
@@ -302,13 +311,6 @@ Proof.
   exists k. exists a. auto.
   Qed.
 
-Ltac destruct_conj_exists := 
-  match goal with
-  | [ H : _ /\ _ |- _ ] => destruct H; destruct_conj_exists
-  | [ H : exists _, _ |- _ ] => destruct H; destruct_conj_exists
-  | _ => idtac
-  end
-.
 Ltac apply_seq_steps h := 
   apply seq_steps in h; destruct_conj_exists; subst; auto.
 
@@ -365,6 +367,7 @@ Proof.
   - exists 1. auto.
   - destruct IHceval1. destruct IHceval2.
     exists (1 + x + x0). cbn.
+    (* eexist *)
     apply more_steps with (j := x + x0) in H1; auto with arith. rewrite H1.
     apply more_steps with (i := x0); auto with arith.
   - destruct IHceval.
@@ -398,6 +401,7 @@ Proof.
   - induction_rem (ceval_steps c1 s x) o Heqo.
     assert (exists i, ceval_steps c1 s i = Some a). exists x. auto.
     assert (exists i, ceval_steps c2 a i = Some s'). exists x. auto.
+    (* eaply *)
     apply IHc1 in H0. apply IHc2 in H3. apply cseq with (q'' := a); auto.
   - cbn in *. clear H1.
     induction_rem (beval b s) b0 Hb0.
