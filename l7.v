@@ -119,7 +119,7 @@ Fixpoint linearize (k : Q) (e : exp) (len : nat) : option (lhs len) :=
   end
 .
 
-(* Write a recursive function linearizeEqs : list (exp × Q) → option (lhs × Q).
+(* g) Write a recursive function linearizeEqs : list (exp × Q) → option (lhs × Q).
 This function linearizes all of the equations in the list in turn,
 building up the sum of the equations.
 It returns None if the linearization of any constituent equation fails. *)
@@ -133,3 +133,42 @@ Fixpoint linearizeEqs (len : nat) (eqs : list (exp * Q)) : option (lhs len * Q) 
       ret (map2 Qplus reslhs lhs, q + resq)
   end
 .
+
+(* h) Define a denotation function for lhs *)
+Fixpoint range k len : ilist nat len := 
+  match len with
+  | 0%nat => INil
+  | (S n)%nat => ICons k (range (k + 1)%nat n)
+  end
+.
+Compute range O 3.
+
+Definition foldri {A B : Type} (f : nat -> A -> B -> B) (acc : B) len (il : ilist A len) : B :=
+  let fix foldri' k n (il : ilist A n) :=
+    match il with
+    | INil => acc
+    | ICons _ x il' => f k x (foldri' (k + 1)%nat _ il')
+    end
+  in
+  foldri' 0%nat len il
+.
+Compute (@foldri nat nat (fun i a acc => (acc + i * a)%nat) 0%nat _ (singleton 1%nat O 4 3)).
+
+Definition lhsDenote len env (l : lhs len) : Q :=
+  (* let indexes := range 0%nat len in *)
+  (* let li : ilist (nat * Q) len := map2 (fun a b => (a%nat ,b%Q)) indexes l in *)
+  let f := fun x a acc => lookup x env * a + acc in
+  foldri f 0 l
+.
+
+Require Import Coq.Program.Equality.
+
+(* i) Prove: when exp linearization succeeds on constant k and expression e,
+the linearized version has the same meaning as k × e. *)
+Lemma lin_ok : forall e len lhs k,
+  linearize k e len = Some lhs -> forall env, 
+  lhsDenote env lhs = k * expDenote e env.
+  intro.
+  dependent induction e; intros.
+  - cbn in *. inversion H.
+    induction len. cbn.
