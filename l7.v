@@ -417,8 +417,8 @@ Proof.
       dependent destruction a;
       let H' := fresh "H'" in
       assert (H' : linearizeEqs len eqs = Some (l, q)); auto; clear Hlin;
-      generalize (@lin_eqs_ok eqs len l q H' env H);
-      inversion H'; cbn;
+      generalize (@lin_eqs_ok eqs len l q H' env H); clear H;
+      inversion_clear H'; cbn; clear q l;
       match goal with
       | [ |- ?X == ?Y -> ?A == ?B ] => ring_simplify X Y A B; intros
       end
@@ -459,18 +459,29 @@ Ltac reifyContext :=
     let eqs := reifyEqs g in
     intros;
     let H := fresh "H" in
-    assert (H : eqsDenote env eqs); [ simpl in *; tauto
-      | repeat match goal with
-        | [ H : expDenote _ _ == _ |- _] => clear H
-        end;
-        generalize (linearizeEqsCorrect env eqs H); clear H; simpl;
-        match goal with
-        | [ |- ?X == ?Y → _ ] =>
-          ring_simplify X Y; intro
-        end ]
-  end.
+    assert (H : eqsDenote env eqs);
+    [ simpl in *; tauto
+    | repeat match goal with
+      | [ H : expDenote _ _ == _ |- _] => clear H
+      end;
+      let len := lenFromEnv env in
+      let Hlin := fresh "Hlin" in
+      let l := fresh "l" in
+      let q := fresh "q" in
+      remember (linearizeEqs len eqs) as linE eqn:Hlin; dind linE;
+      dependent destruction a;
+      let H' := fresh "H'" in
+      assert (H' : linearizeEqs len eqs = Some (l, q)); auto; clear Hlin;
+      generalize (@lin_eqs_ok eqs len l q H' env H); clear H;
+      inversion_clear H'; cbn; clear q l;
+      match goal with
+      | [ |- ?X == ?Y -> ?A == ?B ] => ring_simplify X Y A B; intros
+      end
+    ]
+  end
+.
 
-Theorem t2 : ∀ x y z,
+Theorem t2 : forall x y z,
   (2 # 1) * (x - (3 # 2) * y) == 15 # 1 ->
   z + (8 # 1) * x == 20 # 1 ->
   (-6 # 2) * y + (10 # 1) * x + z == 35 # 1.
