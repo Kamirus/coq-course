@@ -364,11 +364,42 @@ Ltac reify vars e :=
   end
 .
 
+(* m) Write a tactic reifyEqs to reify a formula that begins with a sequence of
+implications from linear equalities whose lefthand sides are expressed with
+expDenote. This tactic should build a list (exp × Q) representing the equations.
+Remember to give an explicit type annotation when returning a nil list,
+as in constr :(@ nil(exp × Q)). *)
+Ltac reifyEqs g := 
+  match g with
+  | expDenote ?e _ == ?q -> ?rest => 
+    let r := reifyEqs rest in
+    constr:((e, q) :: r)
+  | _ => constr:(@nil (exp * Q))
+  end
+.
+Ltac toExpDenote env :=
+  match goal with
+  | [ H : ?e == ?num # ?den |- _ ] =>
+    let r := reify env e in
+    change (expDenote r env == num # den) in H;
+    generalize H;
+    clear H
+  end
+.
+
 Goal forall x y z,
   (2 # 1) * (x - (3 # 2) * y) == 15 # 1 ->
   z + (8 # 1) * x == 20 # 1 ->
   (-6 # 2) * y + (10 # 1) * x + z == 35 # 1.
 Proof.
+  intros.
+  let env := findVarsHyps in
+  repeat toExpDenote env;
+  match goal with
+  | [ |- ?g ] =>
+    let re := reifyEqs g in idtac re
+  end.
+
   intros.
   let vars := findVarsHyps in idtac vars.
   let zero := constr:(O%nat) in
@@ -380,34 +411,26 @@ Proof.
   let vars := findVarsHyps in
   let y := reify vars ((2 # 1) * (x - (3 # 2) * y)) in idtac y.
 Abort.
-(* m) Write a tactic reifyEqs to reify a formula that begins with a sequence of
-implications from linear equalities whose lefthand sides are expressed with
-expDenote. This tactic should build a list (exp × Q) representing the equations.
-Remember to give an explicit type annotation when returning a nil list,
-as in constr :(@ nil(exp × Q)). *)
 
 (* n) Now this final tactic should do the job: *)
-
-(* Ltac reifyContext :=
-  let ls := findVarsHyps in
-  repeat match goal with
-    | [ H : ?e == ?num # ?den |- _ ] ⇒
-      let r := reify ls e in
-      change (expDenote ls r == num # den) in H;
-      generalize H
-    end;
+Ltac reifyContext :=
+  let env := findVarsHyps in
+  repeat toExpDenote env;
   match goal with
-  | [ |- ?g ] ⇒
-    let re := reifyEqs g in
+  | [ |- ?g ] =>
+    let eqs := reifyEqs g in
     intros;
     let H := fresh "H" in
-    assert (H : eqsDenote ls re);
-    [ simpl in *; tauto
+    assert (H : eqsDenote env eqs); [ simpl in *; tauto
       | repeat match goal with
-  == |- ] ⇒ clear H
-  | [ H : expDenote
-  end ;
-  end. *)
+        | [ H : expDenote _ _ == _ |- _] => clear H
+        end;
+        generalize (linearizeEqsCorrect env eqs H); clear H; simpl;
+        match goal with
+        | [ |- ?X == ?Y → _ ] =>
+          ring_simplify X Y; intro
+        end ]
+  end.
 
 Theorem t2 : ∀ x y z,
   (2 # 1) * (x - (3 # 2) * y) == 15 # 1 ->
