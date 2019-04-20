@@ -7,6 +7,7 @@ Definition bind {A B : Type} (a : option A) (f : A -> option B) : option B :=
     | Some x => f x
     | None => None
   end.
+Hint Unfold ret bind.
 
 Notation "A >>= F" := (bind A F) (at level 42, left associativity).
 
@@ -30,25 +31,24 @@ Inductive exp :=
 | sub : exp -> exp -> exp
 | mul : exp -> exp -> exp
 .
+Load DepList.
 
+Definition Env len := ilist Q len.
 (* b) Define a function lookup for reading an element out of a list of rationals,
 by its position in the list. *)
-Fixpoint lookup (i : nat) (env : list Q) := List.nth i env 0.
-(* Fixpoint lookup (i : nat) (env : list Q) : Nat.lt i (length env) -> Q.
-  refine (
-    match env, i with
-    | [], _ => fun h => _
-    | x :: _, O => fun _ => x
-    | _ :: env', S i' => fun pf => lookup i' env' _
-    end
-  ).
-  cbn in h. apply lt_0 in h. contradiction.
-  cbn in pf. auto with arith.
-Defined. *)
+Fixpoint lookup (len : nat) (i : nat) (env : Env len) := 
+  match i, env with
+  | _, INil => 0
+  | O, ICons _ x _ => x
+  | (S i')%nat, ICons _ x env' => lookup i' env'
+  end
+.
+Hint Unfold lookup.
+(* List.nth i env 0. *)
 
 (* c) Define a function expDenote that translates exps,
 along with lists of rationals representing variable values, to Q . *)
-Fixpoint expDenote (e : exp) (env : list Q) : Q :=
+Fixpoint expDenote (len : nat) (e : exp) (env : Env len) : Q :=
   match e with
   | var x => lookup x env
   | const a => a
@@ -58,11 +58,9 @@ Fixpoint expDenote (e : exp) (env : list Q) : Q :=
   end
 .
 
-Load DepList.
-
 (* d) Define a recursive function eqsDenote over list ( exp × Q ),
 characterizing when all of the equations are true. *)
-Fixpoint eqsDenote env (es : list (exp * Q)) :=
+Fixpoint eqsDenote len (env : Env len) (es : list (exp * Q)) :=
   match es with
   | nil => True
   | (e, q) :: es' => expDenote e env == q /\ eqsDenote env es'
@@ -111,11 +109,14 @@ Fixpoint linearize (k : Q) (e : exp) (len : nat) : option (lhs len) :=
     l1 <-- linearize k e1 len ;
     l2 <-- linearize k e2 len ;
     ret (map2 Qminus l1 l2)
-  | mul e1 e2 => match toConst e1, toConst e2 with
+  | mul (const c) e => linearize (c * k) e len
+  | mul e (const c) => linearize (c * k) e len
+  | mul _ _ => None
+  (* | mul e1 e2 => match toConst e1, toConst e2 with
                 | Some c1, None => linearize (c1 * k) e2 len
                 | None, Some c2 => linearize (c2 * k) e1 len
                 | _, _ => None
-                end
+                end *)
   end
 .
 
@@ -154,21 +155,132 @@ Definition foldri {A B : Type} (f : nat -> A -> B -> B) (acc : B) len (il : ilis
 .
 Compute (@foldri nat nat (fun i a acc => (acc + i * a)%nat) 0%nat _ (singleton 1%nat O 4 3)).
 
-Definition lhsDenote len env (l : lhs len) : Q :=
-  (* let indexes := range 0%nat len in *)
-  (* let li : ilist (nat * Q) len := map2 (fun a b => (a%nat ,b%Q)) indexes l in *)
-  let f := fun x a acc => lookup x env * a + acc in
-  foldri f 0 l
+Fixpoint lhsDenote len (l : lhs len) : Env len -> Q :=
+  match l with
+  | INil => fun _ => 0
+  | ICons n a l' => fun env => lookup 0 env * a + lhsDenote l' (tl env)
+  end
 .
 
+Hint Resolve Qmult_0_r.
+
+Ltac try_inv :=
+  match goal with
+  | [ H : _ |- _ ] => solve [inversion H; auto]
+  | _ => idtac
+  end.
+
+Ltac induction_rem h b Hb :=
+  remember h as b eqn:Hb; apply eq_sym in Hb; dependent induction b; cbn in *;
+  try_inv.
+
+Ltac ind h :=
+  dependent induction h; cbn in *; try_inv.
+
+Ltac dd h := dependent destruction h.
+
+Ltac dind h :=
+  dependent induction h; try_inv.
+
+Ltac auto2 := auto; auto with arith; auto with qarith.
+
 Require Import Coq.Program.Equality.
+
+Lemma denoteEvery0 : forall len env,
+  lhsDenote env (everywhere 0 len) == 0.
+Proof.
+  intros. dind len; cbn; dd env; cbn; auto with qarith.
+  rewrite IHlen. auto with qarith.
+  Qed.
+Hint Rewrite denoteEvery0.
+
+Hint Resolve Qplus_0_r Qmult_comm Qmult_0_l Qplus_0_l.
+Search (0 * _ == 0).
+
+Lemma denoteSingle : forall n len (env : Env len) q, (n < len)%nat ->
+  lhsDenote env (singleton q 0 len n) == lookup n env * q.
+Proof.
+  intros. dind n; dind len; cbn; dd env; cbn.
+  - rewrite denoteEvery0. rewrite Qplus_0_r. auto with qarith.
+  - rewrite IHn; auto with arith.
+    rewrite Qmult_0_l. auto with qarith.
+  Qed.
 
 (* i) Prove: when exp linearization succeeds on constant k and expression e,
 the linearized version has the same meaning as k × e. *)
 Lemma lin_ok : forall e len lhs k,
   linearize k e len = Some lhs -> forall env, 
-  lhsDenote env lhs = k * expDenote e env.
+  lhsDenote env lhs == k * expDenote e env.
   intro.
-  dependent induction e; intros.
-  - cbn in *. inversion H.
-    induction len. cbn.
+  dependent induction e; intros; cbn in *.
+  - inversion H.
+    dind n.
+    + cbn. dind env; cbn; auto with qarith. admit. (*lemma*)
+    + cbn. dind env; cbn; auto with qarith. admit.
+    (* induction_rem (singleton k 0 len n) s Hs.
+    inversion H. cbn.
+    + ind env. induction n; cbn; auto with qarith.
+    + dependent destruction n; dependent destruction env; 
+      inversion Hs; simpl_existTs; inversion H.
+      * subst. cbn. admit. (*everywhere 0 -> lemma*)
+      * cbn. subst. inversion H. inversion Hs. simpl_existTs. subst.
+        dependent destruction env. cbn. *)
+  - inversion H.
+  - induction_rem (linearize k e1 len) o1 Ho1.
+    induction_rem (linearize k e2 len) o2 Ho2.
+    rewrite Qmult_plus_distr_r.
+    eapply IHe1 in Ho1. rewrite <- Ho1.
+    eapply IHe2 in Ho2. rewrite <- Ho2.
+    inversion H.
+    admit.
+  - admit.
+  - dind e1.
+    + dind e2. cbn in *. inversion H. admit.
+    + induction_rem e2 e22 H2. subst. inversion H. 
+    + admit.
+    + admit.
+    + admit.
+Admitted.
+
+(* j) Prove: when linearizeEqs succeeds on an equation list eqs,
+then the final summed-up equation is true whenever
+the original equation list is true. *)
+
+(* k) Write a tactic findVarsHyps to search through all equalities on rationals
+in the context, recursing through addition, subtraction, and multiplication
+to find the list of expressions that should be treated as variables.
+This list should be suitable as an argument to expDenote and eqsDenote,
+associating a Q value to each natural number that stands for a variable. *)
+(* Ltac findVarsHyps  *)
+
+(* l) Write a tactic reify to reify a Q expression into exp,
+with respect to a given list of variable values. *)
+
+(* m) Write a tactic reifyEqs to reify a formula that begins with a sequence of
+implications from linear equalities whose lefthand sides are expressed with
+expDenote. This tactic should build a list (exp × Q) representing the equations.
+Remember to give an explicit type annotation when returning a nil list,
+as in constr :(@ nil(exp × Q)). *)
+
+(* n) Now this final tactic should do the job: *)
+
+Ltac reifyContext :=
+  let ls := findVarsHyps in
+  repeat match goal with
+    | [ H : ?e == ?num # ?den |- _ ] ⇒
+      let r := reify ls e in
+      change (expDenote ls r == num # den) in H;
+      generalize H
+    end;
+  match goal with
+  | [ |- ?g ] ⇒
+    let re := reifyEqs g in
+    intros;
+    let H := fresh "H" in
+    assert (H : eqsDenote ls re);
+    [ simpl in *; tauto
+      | repeat match goal with
+  == |- ] ⇒ clear H
+  | [ H : expDenote
+  end ;
+  end.
