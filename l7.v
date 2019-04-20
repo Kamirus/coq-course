@@ -1,5 +1,8 @@
 Require Import Arith.
 
+Search ({_ <= _} + {_ < _}). (* le_gt_dec *)
+Print le_lt_dec.
+
 Definition ret {A : Type} (x : A) := Some x.
  
 Definition bind {A B : Type} (a : option A) (f : A -> option B) : option B :=
@@ -205,6 +208,53 @@ Proof.
   - rewrite IHn; auto with arith.
     rewrite Qmult_0_l. auto with qarith.
   Qed.
+Hint Resolve denoteSingle.
+Hint Rewrite denoteSingle.
+
+Lemma denoteSingleOut : forall n len (env : Env len) q, (n >= len)%nat ->
+  lhsDenote env (singleton q 0 len n) == 0.
+Proof.
+  intros. dind n; dind len; cbn; dd env; cbn; auto2.
+  rewrite Qmult_0_l. rewrite Qplus_0_l. apply IHn. auto2.
+  Qed.
+
+Lemma lookupOut : forall n len (env : Env len), (n >= len)%nat -> lookup n env == 0.
+Proof.
+  intros. dind n; dd env; cbn; auto2; try_inv.
+  Qed.
+
+Hint Rewrite Qmult_plus_distr_l.
+Check Qplus_assoc.
+
+Lemma map2_aux : forall q0 q1 q a b, 
+  (q0 + q1) * q + (a + b) == q0 * q + a + (q1 * q + b).
+Proof. intros. ring. Qed.
+Hint Resolve map2_aux.
+
+Lemma map2_ok : forall len (env : Env len) (a b : lhs len),
+  lhsDenote env (map2 Qplus a b) == lhsDenote env a + lhsDenote env b.
+Proof.
+  intros.
+  dind len; dd a; dd b; dd env; cbn; auto2.
+  rewrite IHlen. auto.
+  Qed.
+
+Lemma map2_ok_minus : forall len (env : Env len) (a b : lhs len),
+  lhsDenote env (map2 Qminus a b) == lhsDenote env a + - lhsDenote env b.
+Proof.
+  intros.
+  dind len; dd a; dd b; dd env; cbn; auto2.
+  rewrite IHlen. 
+  ring.
+  Qed.
+
+Lemma Qmul_minus_aux : forall a b k, a == k * b -> - a == k * (- b).
+Proof. intros. rewrite H. ring. Qed.
+
+Ltac case_le_lt_dec len n := 
+  case (le_lt_dec len n); intros;
+  (rewrite lookupOut; auto2; rewrite denoteSingleOut; auto2; ring)
+  || (rewrite denoteSingle; auto; ring).
 
 (* i) Prove: when exp linearization succeeds on constant k and expression e,
 the linearized version has the same meaning as k × e. *)
@@ -212,19 +262,8 @@ Lemma lin_ok : forall e len lhs k,
   linearize k e len = Some lhs -> forall env, 
   lhsDenote env lhs == k * expDenote e env.
   intro.
-  dependent induction e; intros; cbn in *.
-  - inversion H.
-    dind n.
-    + cbn. dind env; cbn; auto with qarith. admit. (*lemma*)
-    + cbn. dind env; cbn; auto with qarith. admit.
-    (* induction_rem (singleton k 0 len n) s Hs.
-    inversion H. cbn.
-    + ind env. induction n; cbn; auto with qarith.
-    + dependent destruction n; dependent destruction env; 
-      inversion Hs; simpl_existTs; inversion H.
-      * subst. cbn. admit. (*everywhere 0 -> lemma*)
-      * cbn. subst. inversion H. inversion Hs. simpl_existTs. subst.
-        dependent destruction env. cbn. *)
+  dind e; intros; cbn in *.
+  - inversion H. case_le_lt_dec len n.
   - inversion H.
   - induction_rem (linearize k e1 len) o1 Ho1.
     induction_rem (linearize k e2 len) o2 Ho2.
@@ -232,15 +271,22 @@ Lemma lin_ok : forall e len lhs k,
     eapply IHe1 in Ho1. rewrite <- Ho1.
     eapply IHe2 in Ho2. rewrite <- Ho2.
     inversion H.
-    admit.
-  - admit.
-  - dind e1.
-    + dind e2. cbn in *. inversion H. admit.
-    + induction_rem e2 e22 H2. subst. inversion H. 
-    + admit.
-    + admit.
-    + admit.
-Admitted.
+    apply map2_ok.
+  - induction_rem (linearize k e1 len) o1 Ho1.
+    induction_rem (linearize k e2 len) o2 Ho2.
+    unfold Qminus.
+    rewrite Qmult_plus_distr_r.
+    eapply IHe1 in Ho1. rewrite <- Ho1.
+    eapply IHe2 in Ho2. 
+      assert (forall a b k, a == k * b -> - a == k * (- b)).
+      intros aa bb kk Hh; rewrite Hh; ring. 
+    apply H0 in Ho2. rewrite <- Ho2.
+    inversion H.
+    apply map2_ok_minus.
+  - dd e1; try solve
+      [dd e2; cbn in *; try_inv; eapply IHe1 in H; rewrite H; ring].
+    cbn in *; try_inv; solve [eapply IHe2 in H; rewrite H; ring].
+Qed.
 
 (* j) Prove: when linearizeEqs succeeds on an equation list eqs,
 then the final summed-up equation is true whenever
