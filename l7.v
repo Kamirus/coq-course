@@ -303,6 +303,14 @@ Ltac notIn h l :=
   | ICons _ ?xs => notIn h xs
   end
 .
+Ltac index i h l :=
+  match l with
+  | INil => fail 1
+  | ICons h _ => i
+  (* | ICons _ ?xs => index i h xs *)
+  | ICons _ ?xs => let i' := constr:((S i)%nat) in index i' h xs
+  end
+.
 Ltac findVarsIn e vars :=
   match e with
   | ?a + ?b => let v' := findVarsIn b vars in findVarsIn a v'
@@ -332,19 +340,46 @@ Ltac findVarsHyps' visited vars :=
 .
 Ltac findVarsHyps := findVarsHyps' constr:(@INil Q) constr:(@INil Q).
 
+(* l) Write a tactic reify to reify a Q expression into exp,
+with respect to a given list of variable values. *)
+Ltac reify vars e := 
+  match e with
+  | ?a + ?b => 
+    let a' := reify vars a in
+    let b' := reify vars b in
+    constr:(add a' b')
+  | ?a - ?b => 
+    let a' := reify vars a in
+    let b' := reify vars b in
+    constr:(sub a' b')
+  | ?a * ?b => 
+    let a' := reify vars a in
+    let b' := reify vars b in
+    constr:(mul a' b')
+  | ?x =>
+    let i := index O x vars in
+    constr:(var i)
+  | ?c =>
+    constr:(const c)
+  end
+.
+
 Goal forall x y z,
   (2 # 1) * (x - (3 # 2) * y) == 15 # 1 ->
   z + (8 # 1) * x == 20 # 1 ->
   (-6 # 2) * y + (10 # 1) * x + z == 35 # 1.
 Proof.
   intros.
-  let x := findVarsHyps in
-    idtac x.
-Qed.
-
-(* l) Write a tactic reify to reify a Q expression into exp,
-with respect to a given list of variable values. *)
-
+  let vars := findVarsHyps in idtac vars.
+  let zero := constr:(O%nat) in
+  let nnil := constr:(@INil Q) in
+  let xnil := constr:(ICons x nnil) in idtac xnil.
+  let vars := findVarsHyps in
+  let i := index O x vars in idtac i.
+  let vars := findVarsHyps in idtac vars.
+  let vars := findVarsHyps in
+  let y := reify vars ((2 # 1) * (x - (3 # 2) * y)) in idtac y.
+Abort.
 (* m) Write a tactic reifyEqs to reify a formula that begins with a sequence of
 implications from linear equalities whose lefthand sides are expressed with
 expDenote. This tactic should build a list (exp × Q) representing the equations.
