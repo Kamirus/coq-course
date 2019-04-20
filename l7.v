@@ -296,7 +296,51 @@ in the context, recursing through addition, subtraction, and multiplication
 to find the list of expressions that should be treated as variables.
 This list should be suitable as an argument to expDenote and eqsDenote,
 associating a Q value to each natural number that stands for a variable. *)
-(* Ltac findVarsHyps  *)
+Ltac notIn h l :=
+  match l with
+  | INil => idtac
+  | ICons h _ => fail 1 "assert notIn failed"
+  | ICons _ ?xs => notIn h xs
+  end
+.
+Ltac findVarsIn e vars :=
+  match e with
+  | ?a + ?b => let v' := findVarsIn b vars in findVarsIn a v'
+  | ?a - ?b => let v' := findVarsIn b vars in findVarsIn a v'
+  | ?a * ?b => let v' := findVarsIn b vars in findVarsIn a v'
+  | _ # _ => vars
+  | ?a => let guard := notIn a vars in constr:(ICons a vars)
+  | _ => vars
+  end
+.
+Ltac findVarsHyps' visited vars :=
+  match goal with
+  | [ H : ?e == _ |- _ ] =>
+    let guard := notIn e visited in
+    let vars' := 
+      match e with
+      | ?a + ?b => findVarsIn (a + b) vars
+      | ?a - ?b => findVarsIn (a - b) vars
+      | ?a * ?b => findVarsIn (a * b) vars
+      | ?a => findVarsIn a vars
+      end
+    in
+    let visited' := constr:(ICons e visited) in
+    findVarsHyps' visited' vars'
+  | _ => vars
+  end
+.
+Ltac findVarsHyps := findVarsHyps' constr:(@INil Q) constr:(@INil Q).
+
+Goal forall x y z,
+  (2 # 1) * (x - (3 # 2) * y) == 15 # 1 ->
+  z + (8 # 1) * x == 20 # 1 ->
+  (-6 # 2) * y + (10 # 1) * x + z == 35 # 1.
+Proof.
+  intros.
+  let x := findVarsHyps in
+    idtac x.
+Qed.
 
 (* l) Write a tactic reify to reify a Q expression into exp,
 with respect to a given list of variable values. *)
@@ -309,7 +353,7 @@ as in constr :(@ nil(exp × Q)). *)
 
 (* n) Now this final tactic should do the job: *)
 
-Ltac reifyContext :=
+(* Ltac reifyContext :=
   let ls := findVarsHyps in
   repeat match goal with
     | [ H : ?e == ?num # ?den |- _ ] ⇒
@@ -328,4 +372,11 @@ Ltac reifyContext :=
   == |- ] ⇒ clear H
   | [ H : expDenote
   end ;
-  end.
+  end. *)
+
+Theorem t2 : ∀ x y z,
+  (2 # 1) * (x - (3 # 2) * y) == 15 # 1 ->
+  z + (8 # 1) * x == 20 # 1 ->
+  (-6 # 2) * y + (10 # 1) * x + z == 35 # 1.
+intros ; reifyContext ; assumption .
+Qed .
