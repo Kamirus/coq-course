@@ -386,6 +386,10 @@ Ltac toExpDenote env :=
     clear H
   end
 .
+Ltac lenFromEnv env :=
+  match type of env with
+  | ilist Q ?len => len
+  end.
 
 Goal forall x y z,
   (2 # 1) * (x - (3 # 2) * y) == 15 # 1 ->
@@ -397,7 +401,41 @@ Proof.
   repeat toExpDenote env;
   match goal with
   | [ |- ?g ] =>
-    let re := reifyEqs g in idtac re
+    let eqs := reifyEqs g in
+    intros;
+    let H := fresh "H" in
+    assert (H : eqsDenote env eqs);
+    [ simpl in *; tauto
+    | repeat match goal with
+      | [ H : expDenote _ _ == _ |- _] => clear H
+      end;
+      let len := lenFromEnv env in
+      let Hlin := fresh "Hlin" in
+      let l := fresh "l" in
+      let q := fresh "q" in
+      remember (linearizeEqs len eqs) as linE eqn:Hlin; dind linE;
+      dependent destruction a;
+      let H' := fresh "H'" in
+      assert (H' : linearizeEqs len eqs = Some (l, q)); auto; clear Hlin;
+      generalize (@lin_eqs_ok eqs len l q H' env H);
+      inversion H'; cbn;
+      match goal with
+      | [ |- ?X == ?Y -> ?A == ?B ] => ring_simplify X Y A B; intros
+      end
+    ]
+    
+    (* [ simpl in *; tauto
+      | repeat match goal with
+        | [ H : expDenote _ _ == _ |- _] => clear H
+        end *)
+        (* generalize (lin_eqs_ok eqs len lhs q linH env H) *)
+        (* clear H;
+        simpl;
+        match goal with
+        | [ |- ?X == ?Y → _ ] =>
+          ring_simplify X Y; intro
+        end  *)
+      (* ] *)
   end.
 
   intros.
