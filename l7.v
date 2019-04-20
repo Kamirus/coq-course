@@ -131,10 +131,10 @@ Fixpoint linearizeEqs (len : nat) (eqs : list (exp * Q)) : option (lhs len * Q) 
   match eqs with
   | [] => Some (everywhere 0 len, 0)
   | (e, q) :: eqs' => 
+      lhs <-- linearize 1 e len ;
       r <-- linearizeEqs len eqs' ;
       let (reslhs, resq) := r in
-      lhs <-- linearize 1 e len ;
-      ret (map2 Qplus reslhs lhs, q + resq)
+      ret (map2 Qplus lhs reslhs, q + resq)
   end
 .
 
@@ -175,6 +175,7 @@ Proof.
   rewrite IHlen. ring.
   Qed.
 Hint Rewrite denoteEvery0.
+Hint Resolve denoteEvery0.
 
 Hint Resolve Qplus_0_r Qmult_comm Qmult_0_l Qplus_0_l.
 Search (0 * _ == 0).
@@ -216,6 +217,7 @@ Proof.
   dind len; dd a; dd b; dd env; cbn; auto2.
   rewrite IHlen. ring.
   Qed.
+Hint Resolve map2_ok.
 
 Lemma map2_ok_minus : forall len (env : Env len) (a b : lhs len),
   lhsDenote (map2 Qminus a b) env == lhsDenote a env + - lhsDenote b env.
@@ -270,22 +272,23 @@ Qed.
 (* j) Prove: when linearizeEqs succeeds on an equation list eqs,
 then the final summed-up equation is true whenever
 the original equation list is true. *)
-Lemma lin_eqs_ok_0 : forall len eqs lhs q, 
+Lemma lin_eqs_ok : forall eqs len lhs q, 
   linearizeEqs len eqs = Some (lhs, q) -> forall env,
-  lhsDenote lhs env == q -> 
-  eqsDenote env eqs.
+  eqsDenote env eqs -> 
+  lhsDenote lhs env == q.
 Proof.
-  intro len. dind eqs; cbn; intros; auto.
-  dd a; ind_rem (linearizeEqs len eqs) linEqs HlinEqs;
-  dd a; ind_rem (linearize 1 e len) linE HlinE.
-  split.
-  - admit.
-  - apply IHeqs with l q0; auto. 
-  apply IHeqs in H0 as H1.
-  - split; auto. admit.
-  -  rewrite <- HlinEqs. rewrite <- H.
-    inversion H. subst.
-  }
+  induction eqs; cbn; intros.
+  inversion H. auto.
+  dd a. ind_rem (linearize 1 e len) linE HlinE.
+  ind_rem (linearizeEqs len eqs) linEqs HlinEqs. dd a0.
+  dd H0.
+  inversion H. subst. clear H.
+  eapply lin_ok in HlinE. rewrite Qmult_1_l in HlinE.
+  rewrite <- HlinE in H0. rewrite <- H0.
+  assert (lhsDenote l env == q1).
+  apply IHeqs; auto.
+  rewrite <- H.
+  auto.
   Qed.
 
 (* k) Write a tactic findVarsHyps to search through all equalities on rationals
