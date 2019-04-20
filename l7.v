@@ -139,32 +139,12 @@ Fixpoint linearizeEqs (len : nat) (eqs : list (exp * Q)) : option (lhs len * Q) 
 .
 
 (* h) Define a denotation function for lhs *)
-Fixpoint range k len : ilist nat len := 
-  match len with
-  | 0%nat => INil
-  | (S n)%nat => ICons k (range (k + 1)%nat n)
-  end
-.
-Compute range O 3.
-
-Definition foldri {A B : Type} (f : nat -> A -> B -> B) (acc : B) len (il : ilist A len) : B :=
-  let fix foldri' k n (il : ilist A n) :=
-    match il with
-    | INil => acc
-    | ICons _ x il' => f k x (foldri' (k + 1)%nat _ il')
-    end
-  in
-  foldri' 0%nat len il
-.
-Compute (@foldri nat nat (fun i a acc => (acc + i * a)%nat) 0%nat _ (singleton 1%nat O 4 3)).
-
 Fixpoint lhsDenote len (l : lhs len) : Env len -> Q :=
   match l with
   | INil => fun _ => 0
   | ICons n a l' => fun env => lookup 0 env * a + lhsDenote l' (tl env)
   end
 .
-
 Hint Resolve Qmult_0_r.
 
 Ltac try_inv :=
@@ -173,7 +153,7 @@ Ltac try_inv :=
   | _ => idtac
   end.
 
-Ltac induction_rem h b Hb :=
+Ltac ind_rem h b Hb :=
   remember h as b eqn:Hb; apply eq_sym in Hb; dependent induction b; cbn in *;
   try_inv.
 
@@ -189,11 +169,10 @@ Ltac auto2 := auto; auto with arith; auto with qarith.
 
 Require Import Coq.Program.Equality.
 
-Lemma denoteEvery0 : forall len env,
-  lhsDenote env (everywhere 0 len) == 0.
+Lemma denoteEvery0 : forall len env, lhsDenote (everywhere 0 len) env == 0.
 Proof.
   intros. dind len; cbn; dd env; cbn; auto with qarith.
-  rewrite IHlen. auto with qarith.
+  rewrite IHlen. ring.
   Qed.
 Hint Rewrite denoteEvery0.
 
@@ -201,21 +180,20 @@ Hint Resolve Qplus_0_r Qmult_comm Qmult_0_l Qplus_0_l.
 Search (0 * _ == 0).
 
 Lemma denoteSingle : forall n len (env : Env len) q, (n < len)%nat ->
-  lhsDenote env (singleton q 0 len n) == lookup n env * q.
+  lhsDenote (singleton q 0 len n) env == lookup n env * q.
 Proof.
   intros. dind n; dind len; cbn; dd env; cbn.
-  - rewrite denoteEvery0. rewrite Qplus_0_r. auto with qarith.
-  - rewrite IHn; auto with arith.
-    rewrite Qmult_0_l. auto with qarith.
+  - rewrite denoteEvery0. ring.
+  - rewrite IHn; auto with arith. ring.
   Qed.
 Hint Resolve denoteSingle.
 Hint Rewrite denoteSingle.
 
 Lemma denoteSingleOut : forall n len (env : Env len) q, (n >= len)%nat ->
-  lhsDenote env (singleton q 0 len n) == 0.
+  lhsDenote (singleton q 0 len n) env == 0.
 Proof.
-  intros. dind n; dind len; cbn; dd env; cbn; auto2.
-  rewrite Qmult_0_l. rewrite Qplus_0_l. apply IHn. auto2.
+  intros. dind n; dind len; dd env; cbn; try ring.
+  rewrite IHn; auto with arith. ring.
   Qed.
 
 Lemma lookupOut : forall n len (env : Env len), (n >= len)%nat -> lookup n env == 0.
@@ -232,15 +210,15 @@ Proof. intros. ring. Qed.
 Hint Resolve map2_aux.
 
 Lemma map2_ok : forall len (env : Env len) (a b : lhs len),
-  lhsDenote env (map2 Qplus a b) == lhsDenote env a + lhsDenote env b.
+  lhsDenote (map2 Qplus a b) env == lhsDenote a env + lhsDenote b env.
 Proof.
   intros.
   dind len; dd a; dd b; dd env; cbn; auto2.
-  rewrite IHlen. auto.
+  rewrite IHlen. ring.
   Qed.
 
 Lemma map2_ok_minus : forall len (env : Env len) (a b : lhs len),
-  lhsDenote env (map2 Qminus a b) == lhsDenote env a + - lhsDenote env b.
+  lhsDenote (map2 Qminus a b) env == lhsDenote a env + - lhsDenote b env.
 Proof.
   intros.
   dind len; dd a; dd b; dd env; cbn; auto2.
@@ -260,20 +238,21 @@ Ltac case_le_lt_dec len n :=
 the linearized version has the same meaning as k × e. *)
 Lemma lin_ok : forall e len lhs k,
   linearize k e len = Some lhs -> forall env, 
-  lhsDenote env lhs == k * expDenote e env.
+  lhsDenote lhs env == k * expDenote e env.
+Proof.
   intro.
   dind e; intros; cbn in *.
   - inversion H. case_le_lt_dec len n.
   - inversion H.
-  - induction_rem (linearize k e1 len) o1 Ho1.
-    induction_rem (linearize k e2 len) o2 Ho2.
+  - ind_rem (linearize k e1 len) o1 Ho1.
+    ind_rem (linearize k e2 len) o2 Ho2.
     rewrite Qmult_plus_distr_r.
     eapply IHe1 in Ho1. rewrite <- Ho1.
     eapply IHe2 in Ho2. rewrite <- Ho2.
     inversion H.
     apply map2_ok.
-  - induction_rem (linearize k e1 len) o1 Ho1.
-    induction_rem (linearize k e2 len) o2 Ho2.
+  - ind_rem (linearize k e1 len) o1 Ho1.
+    ind_rem (linearize k e2 len) o2 Ho2.
     unfold Qminus.
     rewrite Qmult_plus_distr_r.
     eapply IHe1 in Ho1. rewrite <- Ho1.
@@ -291,6 +270,23 @@ Qed.
 (* j) Prove: when linearizeEqs succeeds on an equation list eqs,
 then the final summed-up equation is true whenever
 the original equation list is true. *)
+Lemma lin_eqs_ok_0 : forall len eqs lhs q, 
+  linearizeEqs len eqs = Some (lhs, q) -> forall env,
+  lhsDenote lhs env == q -> 
+  eqsDenote env eqs.
+Proof.
+  intro len. dind eqs; cbn; intros; auto.
+  dd a; ind_rem (linearizeEqs len eqs) linEqs HlinEqs;
+  dd a; ind_rem (linearize 1 e len) linE HlinE.
+  split.
+  - admit.
+  - apply IHeqs with l q0; auto. 
+  apply IHeqs in H0 as H1.
+  - split; auto. admit.
+  -  rewrite <- HlinEqs. rewrite <- H.
+    inversion H. subst.
+  }
+  Qed.
 
 (* k) Write a tactic findVarsHyps to search through all equalities on rationals
 in the context, recursing through addition, subtraction, and multiplication
