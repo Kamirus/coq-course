@@ -82,24 +82,6 @@ This function returns None when it discovers the input expression is not linear.
 The parameter len of lhs should be a parameter of linearize, too.
 The functions: singleton, everywhere, and map2 from DepList will probably be helpful.
 It is also helpful to know that Qplus is the identifier for rational addition *)
-Fixpoint toConst (e : exp) : option Q :=
-  match e with
-  | var _ => None
-  | const a => Some a
-  | add e1 e2 => match toConst e1, toConst e2 with
-                | Some c1, Some c2 => Some (c1 + c2)
-                | _, _ => None
-                end
-  | sub e1 e2 => match toConst e1, toConst e2 with
-                | Some c1, Some c2 => Some (c1 - c2)
-                | _, _ => None
-                end
-  | mul e1 e2 => match toConst e1, toConst e2 with
-                | Some c1, Some c2 => Some (c1 * c2)
-                | _, _ => None
-                end
-  end
-.
 Fixpoint linearize (k : Q) (e : exp) (len : nat) : option (lhs len) :=
   match e with
   | var x => Some (singleton k 0 len x)
@@ -115,11 +97,6 @@ Fixpoint linearize (k : Q) (e : exp) (len : nat) : option (lhs len) :=
   | mul (const c) e => linearize (c * k) e len
   | mul e (const c) => linearize (c * k) e len
   | mul _ _ => None
-  (* | mul e1 e2 => match toConst e1, toConst e2 with
-                | Some c1, None => linearize (c1 * k) e2 len
-                | None, Some c2 => linearize (c2 * k) e1 len
-                | _, _ => None
-                end *)
   end
 .
 
@@ -413,8 +390,9 @@ Proof.
       let Hlin := fresh "Hlin" in
       let l := fresh "l" in
       let q := fresh "q" in
-      remember (linearizeEqs len eqs) as linE eqn:Hlin; dind linE;
-      dependent destruction a;
+      remember (linearizeEqs len eqs) as linE eqn:Hlin;
+      destruct linE as [ linE | linE ]; try_inv;
+      destruct linE as [ l q ];
       let H' := fresh "H'" in
       assert (H' : linearizeEqs len eqs = Some (l, q)); auto; clear Hlin;
       generalize (@lin_eqs_ok eqs len l q H' env H); clear H;
@@ -423,19 +401,6 @@ Proof.
       | [ |- ?X == ?Y -> ?A == ?B ] => ring_simplify X Y A B; intros
       end
     ]
-    
-    (* [ simpl in *; tauto
-      | repeat match goal with
-        | [ H : expDenote _ _ == _ |- _] => clear H
-        end *)
-        (* generalize (lin_eqs_ok eqs len lhs q linH env H) *)
-        (* clear H;
-        simpl;
-        match goal with
-        | [ |- ?X == ?Y → _ ] =>
-          ring_simplify X Y; intro
-        end  *)
-      (* ] *)
   end.
 
   intros.
@@ -468,8 +433,9 @@ Ltac reifyContext :=
       let Hlin := fresh "Hlin" in
       let l := fresh "l" in
       let q := fresh "q" in
-      remember (linearizeEqs len eqs) as linE eqn:Hlin; dind linE;
-      dependent destruction a;
+      remember (linearizeEqs len eqs) as linE eqn:Hlin;
+      destruct linE as [ linE | linE ]; try_inv;
+      destruct linE as [ l q ];
       let H' := fresh "H'" in
       assert (H' : linearizeEqs len eqs = Some (l, q)); auto; clear Hlin;
       generalize (@lin_eqs_ok eqs len l q H' env H); clear H;
