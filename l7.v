@@ -47,7 +47,6 @@ Fixpoint lookup (len : nat) (i : nat) (env : Env len) :=
   end
 .
 Hint Unfold lookup.
-(* List.nth i env 0. *)
 
 (* c) Define a function expDenote that translates exps,
 along with lists of rationals representing variable values, to Q . *)
@@ -205,14 +204,6 @@ Proof.
   ring.
   Qed.
 
-Lemma Qmul_minus_aux : forall a b k, a == k * b -> - a == k * (- b).
-Proof. intros. rewrite H. ring. Qed.
-
-Ltac case_le_lt_dec len n := 
-  case (le_lt_dec len n); intros;
-  (rewrite lookupOut; auto2; rewrite denoteSingleOut; auto2; ring)
-  || (rewrite denoteSingle; auto; ring).
-
 (* i) Prove: when exp linearization succeeds on constant k and expression e,
 the linearized version has the same meaning as k × e. *)
 Lemma lin_ok : forall e len lhs k,
@@ -221,7 +212,10 @@ Lemma lin_ok : forall e len lhs k,
 Proof.
   intro.
   dind e; intros; cbn in *.
-  - inversion H. case_le_lt_dec len n.
+  - inversion H.
+    case (le_lt_dec len n); intros;
+    (rewrite lookupOut; auto2; rewrite denoteSingleOut; auto2; ring)
+    || (rewrite denoteSingle; auto; ring).
   - inversion H.
   - ind_rem (linearize k e1 len) o1 Ho1.
     ind_rem (linearize k e2 len) o2 Ho2.
@@ -284,7 +278,6 @@ Ltac index i h l :=
   match l with
   | INil => fail 1
   | ICons h _ => i
-  (* | ICons _ ?xs => index i h xs *)
   | ICons _ ?xs => let i' := constr:((S i)%nat) in index i' h xs
   end
 .
