@@ -15,6 +15,93 @@
     skończone i nieskończone.
 *)
 
+CoInductive LTree (A : Type) : Type :=
+{
+  unnode : option (LTree A * A * LTree A);
+}.
+
+CoInductive bisym {A : Type} (t1 t2 : LTree A) : Prop :=
+| bileaf : unnode A t1 = None /\ unnode A t2 = None -> bisym t1 t2
+| binode : forall t1l v1 t1r t2l v2 t2r,
+    unnode A t1 = Some (t1l, v1, t1r) ->
+    unnode A t2 = Some (t2l, v2, t2r) ->
+    v1 = v2 ->
+    bisym t1l t2l ->
+    bisym t1r t2r -> 
+    bisym t1 t2
+.
+
+(* {
+  bileaf : unnode A t1 = None -> unnode A t2 = None;
+  binode : forall t1l v1 t1r, unnode A t1 = Some (t1l, v1, t1r) ->
+    forall t2l v2 t2r,
+    unnode A t2 = Some (t2l, v2, t2r) /\
+    v1 = v2 /\
+    bisym A t1l t2l /\
+    bisym A t1r t2r;
+}. *)
+
+CoInductive Finite {A : Type} (t : LTree A) : Prop :=
+| finleaf : unnode A t = None -> Finite t
+| finnode : forall l v r, unnode A t = Some (l,v,r) -> Finite l -> Finite r -> Finite t
+.
+
+CoInductive Infinite {A : Type} (t : LTree A) : Prop :=
+{
+  v : A;
+  l : LTree A;
+  r : LTree A;
+  p : unnode A t = Some (l, v, r);
+  infl : Infinite A l;
+  infr : Infinite A r;
+}.
+
+Definition leaf {A : Type} : LTree A := {| unnode := None |}.
+
+Definition node {A : Type} l v r : LTree A := {| unnode := Some (l, v, r) |}.
+
+CoFixpoint mirror {A : Type} (t : LTree A) : LTree A := 
+  match unnode A t with
+  | None => leaf
+  | Some (l, v, r) => node (mirror r) v (mirror l)
+  end
+.
+
+Ltac rind exp o H := remember exp as o eqn:H; induction o.
+Ltac d3 tup l v r := 
+  let p := fresh "p" in destruct tup as [p r]; destruct p as [l v].
+Ltac tryinv := 
+  match goal with
+  | [ H : _ |- _ ] => solve [inversion H; auto]
+  | _ => idtac
+  end.
+
+Lemma bisym_refl : forall (A : Type) (t : LTree A), bisym t t.
+Proof.
+  cofix CH. intros.
+  remember (unnode A t) as o eqn:H. induction o as [ tup | ].
+  - d3 tup l v r. eapply binode; eauto.
+  - apply bileaf; auto.
+  Qed.
+
+Lemma bisym_sym : forall (A : Type) (t1 t2 : LTree A), bisym t1 t2 -> bisym t2 t1.
+Proof.
+  cofix CH. intros. inversion H.
+  - apply bileaf. destruct H0. split; auto.
+  - eapply binode; eauto.
+  Qed.
+
+Lemma bisym_trans : forall (A : Type) (t1 t2 t3 : LTree A),
+  bisym t1 t2 -> bisym t2 t3 -> bisym t1 t3.
+Proof.
+  cofix CH. intros. inversion H; inversion H0.
+  - eapply bileaf. destruct H1. destruct H2. split; auto.
+  - destruct H1. destruct (unnode A t2); tryinv.
+  - destruct H6. destruct (unnode A t2); tryinv.
+  - rewrite H2 in H6. inversion H6. subst.
+    eapply binode; eauto.
+  Qed.
+
 (** **** Zadanie 2 - 4p *)
 
 (*

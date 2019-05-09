@@ -20,7 +20,7 @@ CoFixpoint from' (n : nat) : Stream nat :=
 CoInductive bisim {A : Type} (s1 s2 : Stream A) : Prop :=
 {
     hds : hd s1 = hd s2;
-    tls : bisim (tl s1) (tl s2);
+    tls : bisim A (tl s1) (tl s2);
 }.
 
 Lemma bisim_refl :
