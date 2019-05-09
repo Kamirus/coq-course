@@ -181,10 +181,10 @@ Proof.
 Hint Rewrite Qmult_plus_distr_l.
 Check Qplus_assoc.
 
-Lemma map2_aux : forall q0 q1 q a b, 
+(* Lemma map2_aux : forall q0 q1 q a b, 
   (q0 + q1) * q + (a + b) == q0 * q + a + (q1 * q + b).
 Proof. intros. ring. Qed.
-Hint Resolve map2_aux.
+Hint Resolve map2_aux. *)
 
 Lemma map2_ok : forall len (env : Env len) (a b : lhs len),
   lhsDenote (map2 Qplus a b) env == lhsDenote a env + lhsDenote b env.
