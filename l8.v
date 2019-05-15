@@ -20,6 +20,22 @@ CoInductive LTree (A : Type) : Type :=
   unnode : option (LTree A * A * LTree A);
 }.
 
+Definition LL {A : Type} (t : LTree A) := 
+  match t with
+  | {| unnode := a |} => {| unnode := a |}
+  end.
+
+Lemma LLid : forall (A : Type) (t : LTree A), t = LL t.
+Proof.
+  intros. unfold LL. destruct t. reflexivity.
+  Qed.
+
+Lemma ltree : forall (A : Type) (t : LTree A), exists r, t = {| unnode := r |}.
+Proof.
+  intros.
+  case t as [ t' ]. induction t'; eexists; eauto.
+  Qed.
+
 CoInductive bisym {A : Type} (t1 t2 : LTree A) : Prop :=
 | bileaf : unnode A t1 = None /\ unnode A t2 = None -> bisym t1 t2
 | binode : forall t1l v1 t1r t2l v2 t2r,
@@ -41,9 +57,13 @@ CoInductive bisym {A : Type} (t1 t2 : LTree A) : Prop :=
     bisym A t1r t2r;
 }. *)
 
-CoInductive Finite {A : Type} (t : LTree A) : Prop :=
-| finleaf : unnode A t = None -> Finite t
-| finnode : forall l v r, unnode A t = Some (l,v,r) -> Finite l -> Finite r -> Finite t
+Definition leaf {A : Type} : LTree A := {| unnode := None |}.
+
+Definition node {A : Type} l v r : LTree A := {| unnode := Some (l, v, r) |}.
+
+CoInductive Finite {A : Type} : LTree A -> Prop :=
+| finleaf : Finite leaf
+| finnode : forall l v r, Finite l -> Finite r -> Finite (node l v r)
 .
 
 CoInductive Infinite {A : Type} (t : LTree A) : Prop :=
@@ -56,9 +76,7 @@ CoInductive Infinite {A : Type} (t : LTree A) : Prop :=
   infr : Infinite A r;
 }.
 
-Definition leaf {A : Type} : LTree A := {| unnode := None |}.
-
-Definition node {A : Type} l v r : LTree A := {| unnode := Some (l, v, r) |}.
+Print Infinite.
 
 CoFixpoint mirror {A : Type} (t : LTree A) : LTree A := 
   match unnode A t with
@@ -67,7 +85,6 @@ CoFixpoint mirror {A : Type} (t : LTree A) : LTree A :=
   end
 .
 
-Ltac rind exp o H := remember exp as o eqn:H; induction o.
 Ltac d3 tup l v r := 
   let p := fresh "p" in destruct tup as [p r]; destruct p as [l v].
 Ltac tryinv := 
@@ -102,6 +119,73 @@ Proof.
     eapply binode; eauto.
   Qed.
 
+Lemma pack_unnode : forall A t res, 
+  res = unnode A t ->
+  t = {| unnode := res |}.
+Proof.
+  intros. case (ltree A t). intros. rewrite H0 in H. cbn in H.
+  rewrite H. assumption. 
+Qed.
+
+Lemma mirror_involution : forall (A : Type) (t : LTree A), bisym (mirror (mirror t)) t.
+Proof.
+  cofix CH. intros.
+  remember (unnode A t) as o eqn:H. induction o as [ tup | ].
+  - d3 tup l v r.
+    eapply binode; eauto.
+    unfold mirror at 2. cbn.
+    (* Nie potrafię tego zredukować/policzyć ... *)
+    rewrite (pack_unnode A t (Some (l,v,r))); auto.
+  - eapply bileaf. split; auto.
+    erewrite (pack_unnode A t); eauto.
+    cbn. reflexivity.    
+  Qed.
+
+Lemma cbn_mirror_node : forall (A : Type) l v r,
+  @mirror A {| unnode := Some (l, v, r) |} = node (mirror r) v (mirror l).
+Proof.
+  intros.
+  cbn.
+Admitted.
+
+Lemma cbn_mirror_leaf : forall (A : Type),
+  @mirror A {| unnode := None |} = leaf.
+Proof.
+  intros.
+  remember ({| unnode := None |}).
+  case (ltree A l). intros. rewrite H. cbn in *.
+  cbn.
+Admitted.
+
+Lemma mirror_finite : forall (A : Type) (t : LTree A),
+  Finite t -> Finite (mirror t).
+Proof.
+  cofix CH. intros.
+  case (ltree A t) as [ m ]. induction m; rewrite H0; cbn.
+  + d3 a l v r.
+    inversion H. 
+    - rewrite H0 in H1; cbn in H1. inversion H1.
+    - rewrite H0 in H3. subst. inversion H3; clear H3; subst.
+      (* apply CH in H2. apply CH in H3. *)
+      rewrite cbn_mirror_node.
+      apply finnode; auto.
+  + rewrite cbn_mirror_leaf. apply finleaf.
+  Qed.
+
+Lemma mirror_infinite : forall (A : Type) (t : LTree A),
+  Infinite t -> Infinite (mirror t).
+Proof.
+  cofix CH. intros. inversion H. 
+  case (ltree A t) as [ m ]. induction m; 
+    rewrite H0 in p; cbn in p; inversion p; subst.
+  rewrite cbn_mirror_node.
+  apply Build_Infinite with (v := v) (l := mirror r) (r := mirror l); auto.
+  Qed.
+
+Lemma not_both : forall (A : Type) (t : LTree A), ~ (Finite t /\ Infinite t).
+Proof.
+  
+  Qed.
 (** **** Zadanie 2 - 4p *)
 
 (*
