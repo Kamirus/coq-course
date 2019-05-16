@@ -79,6 +79,7 @@ Lemma merge_split :
   forall (A : Type) (s : Stream A),
     bisim (merge (split s)) s.
 Proof.
+  unfold split.
   cofix CH.
   intros. constructor.
     cbn. reflexivity.

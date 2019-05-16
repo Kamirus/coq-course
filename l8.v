@@ -47,23 +47,13 @@ CoInductive bisym {A : Type} (t1 t2 : LTree A) : Prop :=
     bisym t1 t2
 .
 
-(* {
-  bileaf : unnode A t1 = None -> unnode A t2 = None;
-  binode : forall t1l v1 t1r, unnode A t1 = Some (t1l, v1, t1r) ->
-    forall t2l v2 t2r,
-    unnode A t2 = Some (t2l, v2, t2r) /\
-    v1 = v2 /\
-    bisym A t1l t2l /\
-    bisym A t1r t2r;
-}. *)
-
 Definition leaf {A : Type} : LTree A := {| unnode := None |}.
 
 Definition node {A : Type} l v r : LTree A := {| unnode := Some (l, v, r) |}.
 
-CoInductive Finite {A : Type} : LTree A -> Prop :=
-| finleaf : Finite leaf
-| finnode : forall l v r, Finite l -> Finite r -> Finite (node l v r)
+CoInductive Finite {A : Type} (t : LTree A) : Prop :=
+| finleaf : unnode A t = None -> Finite t
+| finnode : forall l v r, unnode A t = Some (l,v,r) -> Finite l -> Finite r -> Finite t
 .
 
 CoInductive Infinite {A : Type} (t : LTree A) : Prop :=
@@ -133,29 +123,11 @@ Proof.
   remember (unnode A t) as o eqn:H. induction o as [ tup | ].
   - d3 tup l v r.
     eapply binode; eauto.
-    unfold mirror at 2. cbn.
-    (* Nie potrafię tego zredukować/policzyć ... *)
     rewrite (pack_unnode A t (Some (l,v,r))); auto.
   - eapply bileaf. split; auto.
     erewrite (pack_unnode A t); eauto.
     cbn. reflexivity.    
   Qed.
-
-Lemma cbn_mirror_node : forall (A : Type) l v r,
-  @mirror A {| unnode := Some (l, v, r) |} = node (mirror r) v (mirror l).
-Proof.
-  intros.
-  cbn.
-Admitted.
-
-Lemma cbn_mirror_leaf : forall (A : Type),
-  @mirror A {| unnode := None |} = leaf.
-Proof.
-  intros.
-  remember ({| unnode := None |}).
-  case (ltree A l). intros. rewrite H. cbn in *.
-  cbn.
-Admitted.
 
 Lemma mirror_finite : forall (A : Type) (t : LTree A),
   Finite t -> Finite (mirror t).
@@ -165,11 +137,10 @@ Proof.
   + d3 a l v r.
     inversion H. 
     - rewrite H0 in H1; cbn in H1. inversion H1.
-    - rewrite H0 in H3. subst. inversion H3; clear H3; subst.
-      (* apply CH in H2. apply CH in H3. *)
-      rewrite cbn_mirror_node.
-      apply finnode; auto.
-  + rewrite cbn_mirror_leaf. apply finleaf.
+    - rewrite H0 in H1. subst. inversion H1; clear H1; subst.
+      eapply finnode with (l := mirror r0) (r := mirror l0); eauto.
+      cbn. eauto.
+  + eapply finleaf; eauto.
   Qed.
 
 Lemma mirror_infinite : forall (A : Type) (t : LTree A),
@@ -178,16 +149,44 @@ Proof.
   cofix CH. intros. inversion H. 
   case (ltree A t) as [ m ]. induction m; 
     rewrite H0 in p; cbn in p; inversion p; subst.
-  rewrite cbn_mirror_node.
   apply Build_Infinite with (v := v) (l := mirror r) (r := mirror l); auto.
   Qed.
 
-Lemma not_both : forall (A : Type) (t : LTree A), ~ (Finite t /\ Infinite t).
-Proof.
-  
-  Qed.
-(** **** Zadanie 2 - 4p *)
+(* Jeśli to zadanie jest warte 2p to nie wiem czy jest sens zaczynać następne... *)
 
+Fixpoint unnode_left_k {A : Type} (t : LTree A) (k : nat) : LTree A :=
+  match k with
+  | 0 => t
+  | S k' => match unnode A t with
+           | None => leaf
+           | Some (l,v,r) => unnode_left_k l k'
+           end
+  end
+.
+
+Lemma fin_path : forall (A : Type) (t : LTree A), 
+  Finite t -> exists k, bisym (unnode_left_k t k) leaf.
+Proof.
+  (* cofix CH. *)
+  intros.
+  inversion H.
+  (* Qed. *)
+  Abort.
+
+Lemma not_both : forall (A : Type) (t t' : LTree A), ~ (Finite t /\ Infinite t).
+Proof.
+  intros.
+  (* cofix. *)
+  intros. intro H. destruct H as [ Hf Hi ].
+  inversion Hi. case (ltree A t) as [ m H ]. induction m as [ tup | ];
+    rewrite H in p; cbn in p; inversion p; subst.
+  inversion Hf; inversion H; subst; clear H p.
+  admit.
+  (* Qed. *)
+  Abort.
+
+
+(** **** Zadanie 2 - 4p *)
 (*
 
     Znajdź taką rodzinę typów koinduktywnych C, że dla dowolnego
@@ -199,6 +198,111 @@ Proof.
     które na szczęście są bardzo oczywiste i same się narzucają.
 
 *)
+
+CoInductive Stream (A : Type) : Type :=
+{
+    hd : A;
+    tl : Stream A;
+}.
+Arguments hd {A}.
+Arguments tl {A}.
+
+CoInductive stream_eq {A : Type} (s1 s2 : Stream A) : Prop :=
+{
+    hds : hd s1 = hd s2;
+    tls : stream_eq A (tl s1) (tl s2);
+}.
+
+Lemma stream_eq_refl :
+  forall (A : Type) (s : Stream A), stream_eq s s.
+Proof.
+  cofix CH. constructor; auto.
+Qed.
+
+Lemma stream_eq_sym :
+  forall (A : Type) (s1 s2 : Stream A),
+    stream_eq s1 s2 -> stream_eq s2 s1.
+Proof.
+  cofix CH.
+  destruct 1 as [hds tls]. constructor; auto.
+Qed.
+
+Lemma stream_eq_trans :
+  forall (A : Type) (s1 s2 s3 : Stream A),
+    stream_eq s1 s2 -> stream_eq s2 s3 -> stream_eq s1 s3.
+Proof.
+  cofix CH.
+  destruct 1 as [hds1 tls1], 1 as [hds2 tls2].
+  constructor; eauto. rewrite hds1. assumption.
+Qed.
+
+Fixpoint nth {A : Type} (s : Stream A) (n : nat) :=
+  match n with
+  | O => s
+  | S m => nth (tl s) m
+  end
+.
+
+Definition stream_to_seq {A : Type} (s : Stream A) : nat -> A :=
+  fun n => hd (nth s n).
+
+CoFixpoint seq_to_stream {A : Type} (f : nat -> A) : Stream A :=
+  {|
+    hd := f 0;
+    tl := seq_to_stream (fun n => f (S n))
+  |}
+.
+
+Lemma unfold_Stream : forall {A : Type} (x : Stream A),
+  x = match x with
+      | {| hd := h; tl := t |} => {| hd := h; tl := t |}
+      end.
+Proof.
+  intros. case x. intros. reflexivity.
+  Qed.
+
+Lemma stream_id : forall (A : Type) (s : Stream A),
+  stream_eq s (seq_to_stream (stream_to_seq s)).
+Proof.
+  cofix CH. intros.
+  constructor.
+    cbn; unfold stream_to_seq; cbn; reflexivity.
+    cbn. constructor.
+      cbn; unfold stream_to_seq; cbn; reflexivity.
+      apply CH.
+Qed.
+
+Require Import FunctionalExtensionality.
+Require Import Setoid.
+
+Add Parametric Relation (A : Type) : (Stream A) (@stream_eq A)
+  reflexivity proved by (stream_eq_refl A)
+  symmetry proved by (stream_eq_sym A)
+  transitivity proved by (stream_eq_trans A)
+  as stream_eq_rel.
+
+Lemma aux : forall (A : Type) (f : nat -> A),
+  @stream_eq A
+    {| hd := f 1; tl := seq_to_stream (fun n => f (S (S n))) |}
+    (seq_to_stream (fun n => f (S n))).
+Proof.
+  intros. constructor.
+    cbn. reflexivity.
+    cbn. reflexivity. (* apply stream_eq_refl. *)
+  Qed.
+
+Lemma seq_id : forall (A : Type) (f : nat -> A),
+  f = (stream_to_seq (seq_to_stream f)).
+Proof.
+  intros.
+  apply functional_extensionality_dep.
+  (* unfold seq_to_stream. *)
+  unfold stream_to_seq.
+  induction x.
+    cbn. reflexivity.
+    cbn.
+Abort.
+  (* Qed. *)
 
 (** **** Zadanie 3 - 0p *)
 
