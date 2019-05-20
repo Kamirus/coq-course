@@ -51,7 +51,7 @@ Definition leaf {A : Type} : LTree A := {| unnode := None |}.
 
 Definition node {A : Type} l v r : LTree A := {| unnode := Some (l, v, r) |}.
 
-CoInductive Finite {A : Type} (t : LTree A) : Prop :=
+Inductive Finite {A : Type} (t : LTree A) : Prop :=
 | finleaf : unnode A t = None -> Finite t
 | finnode : forall l v r, unnode A t = Some (l,v,r) -> Finite l -> Finite r -> Finite t
 .
@@ -132,15 +132,11 @@ Proof.
 Lemma mirror_finite : forall (A : Type) (t : LTree A),
   Finite t -> Finite (mirror t).
 Proof.
-  cofix CH. intros.
-  case (ltree A t) as [ m ]. induction m; rewrite H0; cbn.
-  + d3 a l v r.
-    inversion H. 
-    - rewrite H0 in H1; cbn in H1. inversion H1.
-    - rewrite H0 in H1. subst. inversion H1; clear H1; subst.
-      eapply finnode with (l := mirror r0) (r := mirror l0); eauto.
-      cbn. eauto.
-  + eapply finleaf; eauto.
+  intros.
+  induction H; case (ltree A t) as [ m ].
+  - apply finleaf. cbn. rewrite H0 in H. cbn in *. subst. cbn. reflexivity.
+  - apply finnode with (l0 := mirror r) (v0 := v) (r0 := mirror l); eauto.
+    subst. cbn in *. subst. cbn. reflexivity.
   Qed.
 
 Lemma mirror_infinite : forall (A : Type) (t : LTree A),
@@ -152,39 +148,13 @@ Proof.
   apply Build_Infinite with (v := v) (l := mirror r) (r := mirror l); auto.
   Qed.
 
-(* Jeśli to zadanie jest warte 2p to nie wiem czy jest sens zaczynać następne... *)
-
-Fixpoint unnode_left_k {A : Type} (t : LTree A) (k : nat) : LTree A :=
-  match k with
-  | 0 => t
-  | S k' => match unnode A t with
-           | None => leaf
-           | Some (l,v,r) => unnode_left_k l k'
-           end
-  end
-.
-
-Lemma fin_path : forall (A : Type) (t : LTree A), 
-  Finite t -> exists k, bisym (unnode_left_k t k) leaf.
-Proof.
-  (* cofix CH. *)
-  intros.
-  inversion H.
-  (* Qed. *)
-  Abort.
-
 Lemma not_both : forall (A : Type) (t t' : LTree A), ~ (Finite t /\ Infinite t).
 Proof.
-  intros.
-  (* cofix. *)
   intros. intro H. destruct H as [ Hf Hi ].
-  inversion Hi. case (ltree A t) as [ m H ]. induction m as [ tup | ];
-    rewrite H in p; cbn in p; inversion p; subst.
-  inversion Hf; inversion H; subst; clear H p.
-  admit.
-  (* Qed. *)
-  Abort.
-
+  induction Hf; case (ltree A t) as [ m ].
+  - inversion Hi. subst. cbn in *. subst. inversion p.
+  - inversion Hi. subst. cbn in *. subst. inversion p. subst. auto.
+  Qed.
 
 (** **** Zadanie 2 - 4p *)
 (*
@@ -253,14 +223,6 @@ CoFixpoint seq_to_stream {A : Type} (f : nat -> A) : Stream A :=
   |}
 .
 
-Lemma unfold_Stream : forall {A : Type} (x : Stream A),
-  x = match x with
-      | {| hd := h; tl := t |} => {| hd := h; tl := t |}
-      end.
-Proof.
-  intros. case x. intros. reflexivity.
-  Qed.
-
 Lemma stream_id : forall (A : Type) (s : Stream A),
   stream_eq s (seq_to_stream (stream_to_seq s)).
 Proof.
@@ -273,36 +235,17 @@ Proof.
 Qed.
 
 Require Import FunctionalExtensionality.
-Require Import Setoid.
-
-Add Parametric Relation (A : Type) : (Stream A) (@stream_eq A)
-  reflexivity proved by (stream_eq_refl A)
-  symmetry proved by (stream_eq_sym A)
-  transitivity proved by (stream_eq_trans A)
-  as stream_eq_rel.
-
-Lemma aux : forall (A : Type) (f : nat -> A),
-  @stream_eq A
-    {| hd := f 1; tl := seq_to_stream (fun n => f (S (S n))) |}
-    (seq_to_stream (fun n => f (S n))).
-Proof.
-  intros. constructor.
-    cbn. reflexivity.
-    cbn. reflexivity. (* apply stream_eq_refl. *)
-  Qed.
 
 Lemma seq_id : forall (A : Type) (f : nat -> A),
   f = (stream_to_seq (seq_to_stream f)).
 Proof.
   intros.
-  apply functional_extensionality_dep.
-  (* unfold seq_to_stream. *)
-  unfold stream_to_seq.
-  induction x.
-    cbn. reflexivity.
-    cbn.
-Abort.
-  (* Qed. *)
+  apply functional_extensionality_dep. intro.
+  generalize dependent f.
+  induction x; intros.
+  - cbn. reflexivity.
+  - apply IHx with (f := fun n => f (S n)).
+  Qed.
 
 (** **** Zadanie 3 - 0p *)
 
