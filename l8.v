@@ -2,7 +2,7 @@
 (** autorstwa Wojciecha Kołowskiego *)
 (** zadania punktowane za 0p nie będą sprawdzane *)
 
-(** **** Zadanie 1 - 2p *)
+(** **** Zadanie 1 - 4p *)
 
 (*
     Zdefiniuj typ potencjalnie nieskończonych drzew binarnych trzymających
@@ -123,7 +123,8 @@ Proof.
   remember (unnode A t) as o eqn:H. induction o as [ tup | ].
   - d3 tup l v r.
     eapply binode; eauto.
-    rewrite (pack_unnode A t (Some (l,v,r))); auto.
+    rewrite (pack_unnode A t (Some (l,v,r))).
+    cbn. auto. auto.
   - eapply bileaf. split; auto.
     erewrite (pack_unnode A t); eauto.
     cbn. reflexivity.    
@@ -142,7 +143,7 @@ Proof.
 Lemma mirror_infinite : forall (A : Type) (t : LTree A),
   Infinite t -> Infinite (mirror t).
 Proof.
-  cofix CH. intros. inversion H. 
+  cofix CH. intros. inversion H.
   case (ltree A t) as [ m ]. induction m; 
     rewrite H0 in p; cbn in p; inversion p; subst.
   apply Build_Infinite with (v := v) (l := mirror r) (r := mirror l); auto.

@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<!-- saved from url=(0054)https://skos.ii.uni.wroc.pl/mod/page/view.php?id=11909 -->
+<html dir="ltr" lang="pl" xml:lang="pl" class="yui3-js-enabled gr__skos_ii_uni_wroc_pl"><link type="text/css" id="dark-mode" rel="stylesheet" href="chrome-extension://dmghijelimhndkbmpgbldicpogfkceaj/data/content_script/general/dark_6.css"><style type="text/css" id="dark-mode-custom-style"></style><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Coq19: Miniprojekt: type-checker dla STLC</title>
+    <link rel="shortcut icon" href="https://skos.ii.uni.wroc.pl/theme/image.php/elegance/theme/1554738153/favicon">
+    
+<meta name="keywords" content="moodle, Coq19: Miniprojekt: type-checker dla STLC">
+<link rel="stylesheet" type="text/css" href="./Coq19_ Miniprojekt_ type-checker dla STLC_files/combo"><script charset="utf-8" id="yui_3_17_2_2_1558938396681_2" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/combo(1)" async=""></script><script charset="utf-8" id="yui_3_17_2_1_1558938396681_12" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/combo(2)" async=""></script><script charset="utf-8" id="yui_3_17_2_1_1558938396681_22" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/combo(3)" async=""></script><link charset="utf-8" rel="stylesheet" id="yui_3_17_2_1_1558938396681_28" href="./Coq19_ Miniprojekt_ type-checker dla STLC_files/combo(4)"><script charset="utf-8" id="yui_3_17_2_1_1558938396681_29" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/combo(5)" async=""></script><script charset="utf-8" id="yui_3_17_2_1_1558938396681_53" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/combo(6)" async=""></script><script charset="utf-8" id="yui_3_17_2_1_1558938396681_55" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/combo(7)" async=""></script><script id="firstthemesheet" type="text/css">/** Required in order to fix style inclusion problems in IE with YUI **/</script><link rel="stylesheet" type="text/css" href="./Coq19_ Miniprojekt_ type-checker dla STLC_files/styles.php">
+<script type="text/javascript">
+//<![CDATA[
+var M = {}; M.yui = {};
+M.pageloadstarttime = new Date();
+M.cfg = {"wwwroot":"https:\/\/skos.ii.uni.wroc.pl","sesskey":"NsDoCxodhG","themerev":"1554738153","slasharguments":1,"theme":"elegance","iconsystemmodule":"core\/icon_system_standard","jsrev":"1554738814","admin":"admin","svgicons":true,"usertimezone":"Europa \/ Warszawa","contextid":24336};var yui1ConfigFn = function(me) {if(/-skin|reset|fonts|grids|base/.test(me.name)){me.type='css';me.path=me.path.replace(/\.js/,'.css');me.path=me.path.replace(/\/yui2-skin/,'/assets/skins/sam/yui2-skin')}};
+var yui2ConfigFn = function(me) {var parts=me.name.replace(/^moodle-/,'').split('-'),component=parts.shift(),module=parts[0],min='-min';if(/-(skin|core)$/.test(me.name)){parts.pop();me.type='css';min=''}
+if(module){var filename=parts.join('-');me.path=component+'/'+module+'/'+filename+min+'.'+me.type}else{me.path=component+'/'+component+'.'+me.type}};
+YUI_config = {"debug":false,"base":"https:\/\/skos.ii.uni.wroc.pl\/lib\/yuilib\/3.17.2\/","comboBase":"https:\/\/skos.ii.uni.wroc.pl\/theme\/yui_combo.php?","combine":true,"filter":null,"insertBefore":"firstthemesheet","groups":{"yui2":{"base":"https:\/\/skos.ii.uni.wroc.pl\/lib\/yuilib\/2in3\/2.9.0\/build\/","comboBase":"https:\/\/skos.ii.uni.wroc.pl\/theme\/yui_combo.php?","combine":true,"ext":false,"root":"2in3\/2.9.0\/build\/","patterns":{"yui2-":{"group":"yui2","configFn":yui1ConfigFn}}},"moodle":{"name":"moodle","base":"https:\/\/skos.ii.uni.wroc.pl\/theme\/yui_combo.php?m\/1554738814\/","combine":true,"comboBase":"https:\/\/skos.ii.uni.wroc.pl\/theme\/yui_combo.php?","ext":false,"root":"m\/1554738814\/","patterns":{"moodle-":{"group":"moodle","configFn":yui2ConfigFn}},"filter":null,"modules":{"moodle-core-notification":{"requires":["moodle-core-notification-dialogue","moodle-core-notification-alert","moodle-core-notification-confirm","moodle-core-notification-exception","moodle-core-notification-ajaxexception"]},"moodle-core-notification-dialogue":{"requires":["base","node","panel","escape","event-key","dd-plugin","moodle-core-widget-focusafterclose","moodle-core-lockscroll"]},"moodle-core-notification-alert":{"requires":["moodle-core-notification-dialogue"]},"moodle-core-notification-confirm":{"requires":["moodle-core-notification-dialogue"]},"moodle-core-notification-exception":{"requires":["moodle-core-notification-dialogue"]},"moodle-core-notification-ajaxexception":{"requires":["moodle-core-notification-dialogue"]},"moodle-core-dock":{"requires":["base","node","event-custom","event-mouseenter","event-resize","escape","moodle-core-dock-loader","moodle-core-event"]},"moodle-core-dock-loader":{"requires":["escape"]},"moodle-core-maintenancemodetimer":{"requires":["base","node"]},"moodle-core-chooserdialogue":{"requires":["base","panel","moodle-core-notification"]},"moodle-core-languninstallconfirm":{"requires":["base","node","moodle-core-notification-confirm","moodle-core-notification-alert"]},"moodle-core-formchangechecker":{"requires":["base","event-focus","moodle-core-event"]},"moodle-core-handlebars":{"condition":{"trigger":"handlebars","when":"after"}},"moodle-core-actionmenu":{"requires":["base","event","node-event-simulate"]},"moodle-core-event":{"requires":["event-custom"]},"moodle-core-blocks":{"requires":["base","node","io","dom","dd","dd-scroll","moodle-core-dragdrop","moodle-core-notification"]},"moodle-core-lockscroll":{"requires":["plugin","base-build"]},"moodle-core-popuphelp":{"requires":["moodle-core-tooltip"]},"moodle-core-tooltip":{"requires":["base","node","io-base","moodle-core-notification-dialogue","json-parse","widget-position","widget-position-align","event-outside","cache-base"]},"moodle-core-dragdrop":{"requires":["base","node","io","dom","dd","event-key","event-focus","moodle-core-notification"]},"moodle-core-checknet":{"requires":["base-base","moodle-core-notification-alert","io-base"]},"moodle-core_availability-form":{"requires":["base","node","event","event-delegate","panel","moodle-core-notification-dialogue","json"]},"moodle-backup-confirmcancel":{"requires":["node","node-event-simulate","moodle-core-notification-confirm"]},"moodle-backup-backupselectall":{"requires":["node","event","node-event-simulate","anim"]},"moodle-course-management":{"requires":["base","node","io-base","moodle-core-notification-exception","json-parse","dd-constrain","dd-proxy","dd-drop","dd-delegate","node-event-delegate"]},"moodle-course-util":{"requires":["node"],"use":["moodle-course-util-base"],"submodules":{"moodle-course-util-base":{},"moodle-course-util-section":{"requires":["node","moodle-course-util-base"]},"moodle-course-util-cm":{"requires":["node","moodle-course-util-base"]}}},"moodle-course-modchooser":{"requires":["moodle-core-chooserdialogue","moodle-course-coursebase"]},"moodle-course-categoryexpander":{"requires":["node","event-key"]},"moodle-course-dragdrop":{"requires":["base","node","io","dom","dd","dd-scroll","moodle-core-dragdrop","moodle-core-notification","moodle-course-coursebase","moodle-course-util"]},"moodle-course-formatchooser":{"requires":["base","node","node-event-simulate"]},"moodle-form-showadvanced":{"requires":["node","base","selector-css3"]},"moodle-form-shortforms":{"requires":["node","base","selector-css3","moodle-core-event"]},"moodle-form-dateselector":{"requires":["base","node","overlay","calendar"]},"moodle-form-passwordunmask":{"requires":[]},"moodle-question-searchform":{"requires":["base","node"]},"moodle-question-qbankmanager":{"requires":["node","selector-css3"]},"moodle-question-chooser":{"requires":["moodle-core-chooserdialogue"]},"moodle-question-preview":{"requires":["base","dom","event-delegate","event-key","core_question_engine"]},"moodle-availability_completion-form":{"requires":["base","node","event","moodle-core_availability-form"]},"moodle-availability_date-form":{"requires":["base","node","event","io","moodle-core_availability-form"]},"moodle-availability_grade-form":{"requires":["base","node","event","moodle-core_availability-form"]},"moodle-availability_group-form":{"requires":["base","node","event","moodle-core_availability-form"]},"moodle-availability_grouping-form":{"requires":["base","node","event","moodle-core_availability-form"]},"moodle-availability_profile-form":{"requires":["base","node","event","moodle-core_availability-form"]},"moodle-mod_assign-history":{"requires":["node","transition"]},"moodle-mod_dialogue-userpreference":{"requires":["base","node","json-parse","userpreference","userpreference-filters","userpreference-highlighters","event","event-key"]},"moodle-mod_dialogue-clickredirector":{"requires":["base","node","json-parse","clickredirector","clickredirector-filters","clickredirector-highlighters","event","event-key"]},"moodle-mod_dialogue-autocomplete":{"requires":["base","node","json-parse","autocomplete","autocomplete-filters","autocomplete-highlighters","event","event-key"]},"moodle-mod_forum-subscriptiontoggle":{"requires":["base-base","io-base"]},"moodle-mod_quiz-modform":{"requires":["base","node","event"]},"moodle-mod_quiz-quizbase":{"requires":["base","node"]},"moodle-mod_quiz-util":{"requires":["node","moodle-core-actionmenu"],"use":["moodle-mod_quiz-util-base"],"submodules":{"moodle-mod_quiz-util-base":{},"moodle-mod_quiz-util-slot":{"requires":["node","moodle-mod_quiz-util-base"]},"moodle-mod_quiz-util-page":{"requires":["node","moodle-mod_quiz-util-base"]}}},"moodle-mod_quiz-questionchooser":{"requires":["moodle-core-chooserdialogue","moodle-mod_quiz-util","querystring-parse"]},"moodle-mod_quiz-repaginate":{"requires":["base","event","node","io","moodle-core-notification-dialogue"]},"moodle-mod_quiz-autosave":{"requires":["base","node","event","event-valuechange","node-event-delegate","io-form"]},"moodle-mod_quiz-dragdrop":{"requires":["base","node","io","dom","dd","dd-scroll","moodle-core-dragdrop","moodle-core-notification","moodle-mod_quiz-quizbase","moodle-mod_quiz-util-base","moodle-mod_quiz-util-page","moodle-mod_quiz-util-slot","moodle-course-util"]},"moodle-mod_quiz-toolboxes":{"requires":["base","node","event","event-key","io","moodle-mod_quiz-quizbase","moodle-mod_quiz-util-slot","moodle-core-notification-ajaxexception"]},"moodle-message_airnotifier-toolboxes":{"requires":["base","node","io"]},"moodle-filter_glossary-autolinker":{"requires":["base","node","io-base","json-parse","event-delegate","overlay","moodle-core-event","moodle-core-notification-alert","moodle-core-notification-exception","moodle-core-notification-ajaxexception"]},"moodle-filter_mathjaxloader-loader":{"requires":["moodle-core-event"]},"moodle-editor_atto-editor":{"requires":["node","transition","io","overlay","escape","event","event-simulate","event-custom","node-event-html5","node-event-simulate","yui-throttle","moodle-core-notification-dialogue","moodle-core-notification-confirm","moodle-editor_atto-rangy","handlebars","timers","querystring-stringify"]},"moodle-editor_atto-plugin":{"requires":["node","base","escape","event","event-outside","handlebars","event-custom","timers","moodle-editor_atto-menu"]},"moodle-editor_atto-menu":{"requires":["moodle-core-notification-dialogue","node","event","event-custom"]},"moodle-editor_atto-rangy":{"requires":[]},"moodle-report_eventlist-eventfilter":{"requires":["base","event","node","node-event-delegate","datatable","autocomplete","autocomplete-filters"]},"moodle-report_loglive-fetchlogs":{"requires":["base","event","node","io","node-event-delegate"]},"moodle-gradereport_grader-gradereporttable":{"requires":["base","node","event","handlebars","overlay","event-hover"]},"moodle-gradereport_history-userselector":{"requires":["escape","event-delegate","event-key","handlebars","io-base","json-parse","moodle-core-notification-dialogue"]},"moodle-tool_capability-search":{"requires":["base","node"]},"moodle-tool_lp-dragdrop-reorder":{"requires":["moodle-core-dragdrop"]},"moodle-tool_monitor-dropdown":{"requires":["base","event","node"]},"moodle-assignfeedback_editpdf-editor":{"requires":["base","event","node","io","graphics","json","event-move","event-resize","transition","querystring-stringify-simple","moodle-core-notification-dialog","moodle-core-notification-alert","moodle-core-notification-warning","moodle-core-notification-exception","moodle-core-notification-ajaxexception"]},"moodle-atto_accessibilitychecker-button":{"requires":["color-base","moodle-editor_atto-plugin"]},"moodle-atto_accessibilityhelper-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_align-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_bold-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_charmap-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_clear-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_collapse-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_emoticon-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_equation-button":{"requires":["moodle-editor_atto-plugin","moodle-core-event","io","event-valuechange","tabview","array-extras"]},"moodle-atto_fullscreen-button":{"requires":["event-resize","moodle-editor_atto-plugin"]},"moodle-atto_html-button":{"requires":["promise","moodle-editor_atto-plugin","moodle-atto_html-beautify","moodle-atto_html-codemirror","event-valuechange"]},"moodle-atto_html-beautify":{},"moodle-atto_html-codemirror":{"requires":["moodle-atto_html-codemirror-skin"]},"moodle-atto_htmlplus-button":{"requires":["moodle-editor_atto-plugin","moodle-atto_htmlplus-beautify","moodle-atto_htmlplus-codemirror","event-valuechange"]},"moodle-atto_htmlplus-beautify":{},"moodle-atto_htmlplus-codemirror":{"requires":["moodle-atto_htmlplus-codemirror-skin"]},"moodle-atto_image-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_indent-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_italic-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_link-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_managefiles-usedfiles":{"requires":["node","escape"]},"moodle-atto_managefiles-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_media-button":{"requires":["moodle-editor_atto-plugin","moodle-form-shortforms"]},"moodle-atto_noautolink-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_orderedlist-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_recordrtc-button":{"requires":["moodle-editor_atto-plugin","moodle-atto_recordrtc-recording"]},"moodle-atto_recordrtc-recording":{"requires":["moodle-atto_recordrtc-button"]},"moodle-atto_rtl-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_strike-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_subscript-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_superscript-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_table-button":{"requires":["moodle-editor_atto-plugin","moodle-editor_atto-menu","event","event-valuechange"]},"moodle-atto_title-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_underline-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_undo-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_unorderedlist-button":{"requires":["moodle-editor_atto-plugin"]}}},"gallery":{"name":"gallery","base":"https:\/\/skos.ii.uni.wroc.pl\/lib\/yuilib\/gallery\/","combine":true,"comboBase":"https:\/\/skos.ii.uni.wroc.pl\/theme\/yui_combo.php?","ext":false,"root":"gallery\/1554738814\/","patterns":{"gallery-":{"group":"gallery"}}}},"modules":{"core_filepicker":{"name":"core_filepicker","fullpath":"https:\/\/skos.ii.uni.wroc.pl\/lib\/javascript.php\/1554738814\/repository\/filepicker.js","requires":["base","node","node-event-simulate","json","async-queue","io-base","io-upload-iframe","io-form","yui2-treeview","panel","cookie","datatable","datatable-sort","resize-plugin","dd-plugin","escape","moodle-core_filepicker","moodle-core-notification-dialogue"]},"core_comment":{"name":"core_comment","fullpath":"https:\/\/skos.ii.uni.wroc.pl\/lib\/javascript.php\/1554738814\/comment\/comment.js","requires":["base","io-base","node","json","yui2-animation","overlay","escape"]},"mathjax":{"name":"mathjax","fullpath":"https:\/\/cdnjs.cloudflare.com\/ajax\/libs\/mathjax\/2.7.2\/MathJax.js?delayStartupUntil=configured"}}};
+M.yui.loader = {modules: {}};
+
+//]]>
+</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="core/first" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/requirejs.php"></script><style id="fit-vids-style">.fluid-width-video-wrapper{width:100%;position:relative;padding:0;}.fluid-width-video-wrapper iframe,.fluid-width-video-wrapper object,.fluid-width-video-wrapper embed {position:absolute;top:0;left:0;width:100%;height:100%;}</style><script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    config: ["Accessible.js", "Safe.js"],
+    errorSettings: { message: ["!"] },
+    skipStartupTypeset: true,
+    messageStyle: "none"
+});
+</script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="jquery" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/javascript.php"></script></head>
+
+<body id="page-mod-page-view" class="format-weeks  path-mod path-mod-page chrome dir-ltr lang-pl yui-skin-sam yui3-skin-sam skos-ii-uni-wroc-pl pagelayout-incourse course-176 context-24336 cmid-11909 category-10 has-region-side-post used-region-side-post side-post-only jsenabled" data-gr-c-s-loaded="true">
+
+<div class="skiplinks">
+    <a href="https://skos.ii.uni.wroc.pl/mod/page/view.php?id=11909#maincontent" class="skip">Przejdź do głównej zawartości</a>
+</div><script type="text/javascript" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/combo(8)"></script><div id="yui3-css-stamp" style="position: absolute !important; visibility: hidden !important" class=""></div><script type="text/javascript" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/fitvids-1.1.0.js"></script>
+<script type="text/javascript" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/eventswipe_0.5.js"></script>
+<script type="text/javascript" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/nprogress.js"></script>
+<script type="text/javascript" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/backstretch_2.0.6.js"></script>
+<script type="text/javascript" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/elegance.js"></script>
+<script type="text/javascript" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/javascript(1).php"></script>
+<script type="text/javascript">
+//<![CDATA[
+document.body.className += ' jsenabled';
+//]]>
+</script>
+
+
+<div id="page-content-wrapper">
+    <nav role="navigation" class="navbar navbar-default eboxshadow">
+
+    <div class="container-fluid">
+        <div class="navbar-header pull-left">
+            <a class="navbar-brand" href="https://skos.ii.uni.wroc.pl/"><div id="logo"></div></a>
+        </div>
+
+        <div class="navbar-header pull-right">
+            <ul class="nav navbar-nav hidden-xs hidden-sm">
+            <div class="pull-right popover-region collapsed">
+    <a id="message-drawer-toggle-5ceb831c5a5b05ceb831c539e430" class="nav-link d-inline-block popover-region-toggle position-relative message-drawer-toggle" href="https://skos.ii.uni.wroc.pl/mod/page/view.php?id=11909#" role="button">
+	<i class="glyphicon glyphicon-inbox"></i>
+        <div class="count-container " data-region="count-container" aria-label="Masz 1 nieprzeczytanych rozmów">1</div>
+    </a>
+</div>
+            </ul>
+            
+            <div class="usermenu"><div class="moodle-actionmenu nowrap-items" id="action-menu-0" data-enhance="moodle-core-actionmenu" data-enhanced="1">
+
+        <ul class="menubar" id="action-menu-0-menubar" role="menubar">
+
+            <!--
+
+            --><!--
+
+            --><li role="presentation"><a href="https://skos.ii.uni.wroc.pl/mod/page/view.php?id=11909#" class=" toggle-display textmenu" id="action-menu-toggle-0" title="Menu użytkownika" role="menuitem" aria-haspopup="true"><span class="userbutton"><span class="usertext mr-1">Kamil Listopad</span><span class="avatars"><span class="avatar current"><img src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/f2.png" class="userpicture defaultuserpic" width="35" height="35" role="presentation" aria-hidden="true"></span></span></span><b class="caret"></b></a>
+</li>
+
+        </ul>
+
+
+        <ul class="menu  align-tr-br" id="action-menu-0-menu" data-rel="menu-content" aria-labelledby="action-menu-toggle-0" role="menu" data-align="tr-br" aria-hidden="true">
+            <li role="presentation">    <a href="https://skos.ii.uni.wroc.pl/my/" class="icon menu-action" role="menuitem" data-title="mymoodle,admin" aria-labelledby="actionmenuaction-1"><img class="icon " alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/dashboard.svg"><span class="menu-action-text" id="actionmenuaction-1">Kokpit</span></a>
+
+
+
+
+
+</li><li role="presentation">
+<span class="filler">&nbsp;</span>
+
+
+
+</li><li role="presentation">    <a href="https://skos.ii.uni.wroc.pl/user/profile.php?id=214" class="icon menu-action" role="menuitem" data-title="profile,moodle" aria-labelledby="actionmenuaction-2"><img class="icon " alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/user.svg"><span class="menu-action-text" id="actionmenuaction-2">Profil</span></a>
+
+
+
+
+
+</li><li role="presentation">    <a href="https://skos.ii.uni.wroc.pl/grade/report/overview/index.php" class="icon menu-action" role="menuitem" data-title="grades,grades" aria-labelledby="actionmenuaction-3"><img class="icon " alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/grades.svg"><span class="menu-action-text" id="actionmenuaction-3">Stopnie</span></a>
+
+
+
+
+
+</li><li role="presentation">    <a href="https://skos.ii.uni.wroc.pl/user/preferences.php" class="icon menu-action" role="menuitem" data-title="preferences,moodle" aria-labelledby="actionmenuaction-4"><img class="icon " alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/preferences.svg"><span class="menu-action-text" id="actionmenuaction-4">Ustawienia</span></a>
+
+
+
+
+
+</li><li role="presentation">
+<span class="filler">&nbsp;</span>
+
+
+
+</li><li role="presentation">    <a href="https://skos.ii.uni.wroc.pl/login/logout.php?sesskey=NsDoCxodhG" class="icon menu-action" role="menuitem" data-title="logout,moodle" aria-labelledby="actionmenuaction-5"><img class="icon " alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/logout.svg"><span class="menu-action-text" id="actionmenuaction-5">Wyloguj</span></a>
+
+
+
+
+
+</li>
+        </ul>
+</div></div>
+            
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#moodle-navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+        </div>
+        <div id="moodle-navbar" class="navbar-collapse collapse navbar-right">
+            <ul class="nav navbar-nav pull-right">
+            <li class="dropdown langmenu"><a href="https://skos.ii.uni.wroc.pl/mod/page/view.php?id=11909#cm_submenu_1" class="dropdown-toggle" data-toggle="dropdown" title="Język">Polski ‎(pl)‎<b class="caret"></b></a><ul class="dropdown-menu"><li><a title="English ‎(en)‎" href="https://skos.ii.uni.wroc.pl/mod/page/view.php?id=11909&amp;lang=en">English ‎(en)‎</a></li><li><a title="Polski ‎(pl)‎" href="https://skos.ii.uni.wroc.pl/mod/page/view.php?id=11909&amp;lang=pl">Polski ‎(pl)‎</a></li></ul>
+            </li></ul>
+            
+            <ul class="nav pull-right">
+                <li></li>
+            </ul>
+            
+        </div>
+    </div>
+
+</nav>
+    
+    
+    
+    <div class="container-fluid">
+                <header id="moodleheader" class="clearfix">
+            <div id="course-header" class="p-l-15 p-r-15 p-b-10 p-t-10">
+                <h1>Obliczenia i wnioskowanie w systemie Coq 2019</h1>                                <span class="notifications" id="user-notifications"></span>            </div>
+        </header>
+        
+    </div>
+
+    <div id="page-navbar">
+    <div class="container-fluid">
+        <div class="breadcrumbcontainer  m-t-5">
+            <nav class="breadcrumb-nav elegancewidth" role="navigation" aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                        <li class=""><span itemscope="" itemtype="http://data-vocabulary.org/Breadcrumb"><a itemprop="url" href="https://skos.ii.uni.wroc.pl/my/"><span itemprop="title">Kokpit</span></a></span></li>
+                        <li class=""><span tabindex="0">Moje kursy</span></li>
+                        <li class=""><span itemscope="" itemtype="http://data-vocabulary.org/Breadcrumb"><a itemprop="url" title="Obliczenia i wnioskowanie w systemie Coq 2019" href="https://skos.ii.uni.wroc.pl/course/view.php?id=176"><span itemprop="title">Coq19</span></a></span></li>
+                        <li class=""><span tabindex="0">23 maj - 29 maj</span></li>
+                        <li class="active"><span itemscope="" itemtype="http://data-vocabulary.org/Breadcrumb"><a itemprop="url" title="Strona" aria-current="page" href="https://skos.ii.uni.wroc.pl/mod/page/view.php?id=11909"><span itemprop="title">Miniprojekt: type-checker dla STLC</span></a></span></li>
+                </ol>
+            </nav>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+</div>
+    <div class="container-fluid">
+    <section id="page">
+        <div id="page-content" class="row">
+            <div id="region-main" class="col-sm-9">
+                <div class="eboxshadow elegance-bg-white p-20">
+                <span class="notifications" id="user-notifications"></span><div role="main"><span id="maincontent"></span><h2>Miniprojekt: type-checker dla STLC</h2><div class="box generalbox center clearfix"><div class="no-overflow"><p><em>[Termin oddawania 6 czerwca]</em></p>
+<p>Sformalizuj w Coqu type-checker dla rachunku lambda z typami prostymi (wraz z dowodem jego poprawności). W wersji minimalnej rozważ język z operacjami na wartościach boolowskich - taki jak opisany w cytowanym niżej artykule. Po wykonaniu obu poniższych poleceń możesz rozszerzyć język według uznania.</p>
+<p>Główne twierdzenie, o które nam chodzi, mogłoby mieć np. taki typ:</p>
+<p><span style="font-family: &#39;courier new&#39;, courier, monospace;">typecheck :&nbsp;</span><span style="font-family: &#39;courier new&#39;, courier, monospace;">forall (G &nbsp;: typing_context) (M : term), option { A : type | has_type G M A }</span></p>
+<p>gdzie <span style="font-family: &#39;courier new&#39;, courier, monospace;">has_type</span> jest relacją typowania, a <span style="font-family: &#39;courier new&#39;, courier, monospace;">typing_context</span> reprezentuje kontekst typowania, czyli przypisanie typów zmiennym. Zmienne możesz reprezentować za pomocą typu <span style="font-family: &#39;courier new&#39;, courier, monospace;">string</span>.</p>
+<p>1. Wykonaj to zadanie dla rachunku lambda&nbsp;à&nbsp;la Church, w którym lambda abstrakcja ma jawnie podany typ argumentu.</p>
+<p>2. Następnie zastanów się, jak to zrobić dla rachunku à&nbsp;la Curry (bez adnotacji typów dla argumentu funkcji).&nbsp;</p>
+<p>Literatura:&nbsp;<a href="http://davidchristiansen.dk/tutorials/bidirectional.pdf" target="_blank">http://davidchristiansen.dk/tutorials/bidirectional.pdf</a></p>
+<p></p>
+<p></p>
+<p></p></div></div><div class="modified">Ostatnia modyfikacja: niedziela, 26 maj 2019, 19:22 </div></div>                </div>
+            </div>
+
+                        <aside id="block-region-side-post" class="col-sm-3 block-region" data-blockregion="side-post" data-droptarget="1"><a class="skip skip-block" id="fsb-1" href="https://skos.ii.uni.wroc.pl/mod/page/view.php?id=11909#sb-1">Pomiń Nawigacja</a><div id="inst4" class="block_navigation  block" role="navigation" data-block="navigation" data-instanceid="4" aria-labelledby="instance-4-header" data-dockable="1"><div class="header"><div class="title" id="yui_3_17_2_1_1558938396681_41"><div class="block_action"><img class="block-hider-hide" alt="Ukryj blok Nawigacja" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/switch_minus.svg" tabindex="0" title="Ukryj blok Nawigacja"><img class="block-hider-show" alt="Pokaż blok Nawigacja" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/switch_plus.svg" tabindex="0" title="Pokaż blok Nawigacja"><input type="image" class="moveto customcommand requiresjs" alt="Zadokuj" title="Zadokuj blok Nawigacja" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/block_to_dock.svg"></div><h2 id="instance-4-header">Nawigacja</h2><hr class="star-primary"></div></div><div class="content"><ul class="block_tree list" role="tree" data-ajax-loader="block_navigation/nav_loader"><li class="type_unknown depth_1 contains_branch" aria-labelledby="label_1_1" tabindex="-1"><p class="tree_item branch navigation_node" role="treeitem" aria-expanded="true" aria-owns="random5ceb831c539e41_group" data-collapsible="false" tabindex="0" aria-selected="true"><a tabindex="-1" id="label_1_1" href="https://skos.ii.uni.wroc.pl/my/">Kokpit</a></p><ul id="random5ceb831c539e41_group" role="group" tabindex="-1"><li class="type_setting depth_2 item_with_icon" aria-labelledby="label_2_2" tabindex="-1"><p class="tree_item hasicon" role="treeitem" tabindex="-1" aria-selected="false"><a tabindex="-1" id="label_2_2" href="https://skos.ii.uni.wroc.pl/?redirect=0"><img class="icon navicon" alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/home.svg" tabindex="-1"><span class="item-content-wrap" tabindex="-1">Strona główna</span></a></p></li><li class="type_course depth_2 contains_branch" aria-labelledby="label_2_3" tabindex="-1"><p class="tree_item branch" role="treeitem" aria-expanded="false" aria-owns="random5ceb831c539e43_group" tabindex="-1" aria-selected="false"><span tabindex="-1" id="label_2_3" title="System komunikacji na odległość ze studentami IIUWr">Strony</span></p><ul id="random5ceb831c539e43_group" role="group" aria-hidden="true" tabindex="-1"><li class="type_unknown depth_3 item_with_icon" aria-labelledby="label_3_5" tabindex="-1"><p class="tree_item hasicon" role="treeitem" tabindex="-1" aria-selected="false"><a tabindex="-1" id="label_3_5" href="https://skos.ii.uni.wroc.pl/blog/index.php"><img class="icon navicon" alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/navigationitem.svg" tabindex="-1"><span class="item-content-wrap" tabindex="-1">Blogi strony</span></a></p></li><li class="type_custom depth_3 item_with_icon" aria-labelledby="label_3_6" tabindex="-1"><p class="tree_item hasicon" role="treeitem" tabindex="-1" aria-selected="false"><a tabindex="-1" id="label_3_6" href="https://skos.ii.uni.wroc.pl/badges/view.php?type=1"><img class="icon navicon" alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/navigationitem.svg" tabindex="-1"><span class="item-content-wrap" tabindex="-1">Strona odznak</span></a></p></li><li class="type_setting depth_3 item_with_icon" aria-labelledby="label_3_7" tabindex="-1"><p class="tree_item hasicon" role="treeitem" tabindex="-1" aria-selected="false"><a tabindex="-1" id="label_3_7" href="https://skos.ii.uni.wroc.pl/tag/search.php"><img class="icon navicon" alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/navigationitem.svg" tabindex="-1"><span class="item-content-wrap" tabindex="-1">Tagi</span></a></p></li><li class="type_custom depth_3 item_with_icon" aria-labelledby="label_3_8" tabindex="-1"><p class="tree_item hasicon" role="treeitem" tabindex="-1" aria-selected="false"><a tabindex="-1" id="label_3_8" href="https://skos.ii.uni.wroc.pl/calendar/view.php?view=month&amp;course=176"><img class="icon navicon" alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/calendar.svg" tabindex="-1"><span class="item-content-wrap" tabindex="-1">Kalendarz</span></a></p></li><li class="type_activity depth_3 item_with_icon" aria-labelledby="label_3_10" tabindex="-1"><p class="tree_item hasicon" role="treeitem" tabindex="-1" aria-selected="false"><a tabindex="-1" id="label_3_10" title="Forum" href="https://skos.ii.uni.wroc.pl/mod/forum/view.php?id=5198"><img class="icon navicon" alt="Forum" title="Forum" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/icon.svg" tabindex="-1"><span class="item-content-wrap" tabindex="-1">Aktualności</span></a></p></li></ul></li><li class="type_system depth_2 contains_branch" aria-labelledby="label_2_12" tabindex="-1"><p class="tree_item branch canexpand" role="treeitem" aria-expanded="true" aria-owns="random5ceb831c539e49_group" tabindex="-1" aria-selected="false"><span tabindex="-1" id="label_2_12">Moje kursy</span></p><ul id="random5ceb831c539e49_group" role="group" tabindex="-1"><li class="type_course depth_3 contains_branch" aria-labelledby="label_3_13" tabindex="-1"><p class="tree_item branch" role="treeitem" id="expandable_branch_20_201" aria-expanded="false" data-requires-ajax="true" data-loaded="false" data-node-id="expandable_branch_20_201" data-node-key="201" data-node-type="20" tabindex="-1" aria-selected="false"><a tabindex="-1" id="label_3_13" title="Języki formalne i złożoność obliczeniowa 2019" href="https://skos.ii.uni.wroc.pl/course/view.php?id=201">JFiZO2019</a></p></li><li class="type_course depth_3 contains_branch" aria-labelledby="label_3_14" tabindex="-1"><p class="tree_item branch canexpand" role="treeitem" aria-expanded="true" aria-owns="random5ceb831c539e410_group" tabindex="-1" aria-selected="false"><a tabindex="-1" id="label_3_14" title="Obliczenia i wnioskowanie w systemie Coq 2019" href="https://skos.ii.uni.wroc.pl/course/view.php?id=176">Coq19</a></p><ul id="random5ceb831c539e410_group" role="group" tabindex="-1"><li class="type_container depth_4 contains_branch" aria-labelledby="label_4_15" tabindex="-1"><p class="tree_item branch" role="treeitem" aria-expanded="false" aria-owns="random5ceb831c539e411_group" tabindex="-1" aria-selected="false"><a tabindex="-1" id="label_4_15" href="https://skos.ii.uni.wroc.pl/user/index.php?id=176">Uczestnicy</a></p><ul id="random5ceb831c539e411_group" role="group" aria-hidden="true" tabindex="-1"><li class="type_setting depth_5 item_with_icon" aria-labelledby="label_5_16" tabindex="-1"><p class="tree_item hasicon" role="treeitem" tabindex="-1" aria-selected="false"><a tabindex="-1" id="label_5_16" href="https://skos.ii.uni.wroc.pl/blog/index.php?courseid=176"><img class="icon navicon" alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/navigationitem.svg" tabindex="-1"><span class="item-content-wrap" tabindex="-1">Blogi kursu</span></a></p></li><li class="type_user depth_5 item_with_icon" aria-labelledby="label_5_17" tabindex="-1"><p class="tree_item hasicon" role="treeitem" tabindex="-1" aria-selected="false"><a tabindex="-1" id="label_5_17" href="https://skos.ii.uni.wroc.pl/user/view.php?id=214&amp;course=176"><img class="icon navicon" alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/navigationitem.svg" tabindex="-1"><span class="item-content-wrap" tabindex="-1">Kamil Listopad</span></a></p></li></ul></li><li class="type_setting depth_4 item_with_icon" aria-labelledby="label_4_18" tabindex="-1"><p class="tree_item hasicon" role="treeitem" tabindex="-1" aria-selected="false"><a tabindex="-1" id="label_4_18" href="https://skos.ii.uni.wroc.pl/badges/view.php?type=2&amp;id=176"><img class="icon navicon" alt="Odznaki" title="Odznaki" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/badge.svg" tabindex="-1"><span class="item-content-wrap" tabindex="-1">Odznaki</span></a></p></li><li class="type_setting depth_4 item_with_icon" aria-labelledby="label_4_19" tabindex="-1"><p class="tree_item hasicon" role="treeitem" tabindex="-1" aria-selected="false"><a tabindex="-1" id="label_4_19" href="https://skos.ii.uni.wroc.pl/admin/tool/lp/coursecompetencies.php?courseid=176"><img class="icon navicon" alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/competencies.svg" tabindex="-1"><span class="item-content-wrap" tabindex="-1">Kompetencje</span></a></p></li><li class="type_setting depth_4 item_with_icon" aria-labelledby="label_4_20" tabindex="-1"><p class="tree_item hasicon" role="treeitem" tabindex="-1" aria-selected="false"><a tabindex="-1" id="label_4_20" href="https://skos.ii.uni.wroc.pl/grade/report/index.php?id=176"><img class="icon navicon" alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/grades(1).svg" tabindex="-1"><span class="item-content-wrap" tabindex="-1">Oceny</span></a></p></li><li class="type_structure depth_4 contains_branch" aria-labelledby="label_4_21" tabindex="-1"><p class="tree_item branch" role="treeitem" id="expandable_branch_30_3221" aria-expanded="false" data-requires-ajax="true" data-loaded="false" data-node-id="expandable_branch_30_3221" data-node-key="3221" data-node-type="30" tabindex="-1" aria-selected="false"><span tabindex="-1" id="label_4_21">Główne składowe</span></p></li><li class="type_structure depth_4 contains_branch" aria-labelledby="label_4_22" tabindex="-1"><p class="tree_item branch" role="treeitem" id="expandable_branch_30_3222" aria-expanded="false" data-requires-ajax="true" data-loaded="false" data-node-id="expandable_branch_30_3222" data-node-key="3222" data-node-type="30" tabindex="-1" aria-selected="false"><span tabindex="-1" id="label_4_22">21 luty - 27 luty</span></p></li><li class="type_structure depth_4 contains_branch" aria-labelledby="label_4_23" tabindex="-1"><p class="tree_item branch" role="treeitem" id="expandable_branch_30_3223" aria-expanded="false" data-requires-ajax="true" data-loaded="false" data-node-id="expandable_branch_30_3223" data-node-key="3223" data-node-type="30" tabindex="-1" aria-selected="false"><span tabindex="-1" id="label_4_23">28 luty - 6 marzec</span></p></li><li class="type_structure depth_4 contains_branch" aria-labelledby="label_4_24" tabindex="-1"><p class="tree_item branch" role="treeitem" id="expandable_branch_30_3224" aria-expanded="false" data-requires-ajax="true" data-loaded="false" data-node-id="expandable_branch_30_3224" data-node-key="3224" data-node-type="30" tabindex="-1" aria-selected="false"><span tabindex="-1" id="label_4_24">7 marzec - 13 marzec</span></p></li><li class="type_structure depth_4 contains_branch" aria-labelledby="label_4_25" tabindex="-1"><p class="tree_item branch" role="treeitem" id="expandable_branch_30_3225" aria-expanded="false" data-requires-ajax="true" data-loaded="false" data-node-id="expandable_branch_30_3225" data-node-key="3225" data-node-type="30" tabindex="-1" aria-selected="false"><span tabindex="-1" id="label_4_25">14 marzec - 20 marzec</span></p></li><li class="type_structure depth_4 contains_branch" aria-labelledby="label_4_26" tabindex="-1"><p class="tree_item branch" role="treeitem" id="expandable_branch_30_3226" aria-expanded="false" data-requires-ajax="true" data-loaded="false" data-node-id="expandable_branch_30_3226" data-node-key="3226" data-node-type="30" tabindex="-1" aria-selected="false"><span tabindex="-1" id="label_4_26">21 marzec - 27 marzec</span></p></li><li class="type_structure depth_4 contains_branch" aria-labelledby="label_4_27" tabindex="-1"><p class="tree_item branch" role="treeitem" id="expandable_branch_30_3227" aria-expanded="false" data-requires-ajax="true" data-loaded="false" data-node-id="expandable_branch_30_3227" data-node-key="3227" data-node-type="30" tabindex="-1" aria-selected="false"><span tabindex="-1" id="label_4_27">28 marzec - 3 kwiecień</span></p></li><li class="type_structure depth_4 contains_branch" aria-labelledby="label_4_28" tabindex="-1"><p class="tree_item branch" role="treeitem" id="expandable_branch_30_3228" aria-expanded="false" data-requires-ajax="true" data-loaded="false" data-node-id="expandable_branch_30_3228" data-node-key="3228" data-node-type="30" tabindex="-1" aria-selected="false"><span tabindex="-1" id="label_4_28">4 kwiecień - 10 kwiecień</span></p></li><li class="type_structure depth_4 contains_branch" aria-labelledby="label_4_29" tabindex="-1"><p class="tree_item branch" role="treeitem" id="expandable_branch_30_3229" aria-expanded="false" data-requires-ajax="true" data-loaded="false" data-node-id="expandable_branch_30_3229" data-node-key="3229" data-node-type="30" tabindex="-1" aria-selected="false"><span tabindex="-1" id="label_4_29">11 kwiecień - 17 kwiecień</span></p></li><li class="type_structure depth_4 contains_branch" aria-labelledby="label_4_30" tabindex="-1"><p class="tree_item branch" role="treeitem" id="expandable_branch_30_3230" aria-expanded="false" data-requires-ajax="true" data-loaded="false" data-node-id="expandable_branch_30_3230" data-node-key="3230" data-node-type="30" tabindex="-1" aria-selected="false"><span tabindex="-1" id="label_4_30">18 kwiecień - 24 kwiecień</span></p></li><li class="type_structure depth_4 contains_branch" aria-labelledby="label_4_31" tabindex="-1"><p class="tree_item branch" role="treeitem" id="expandable_branch_30_3231" aria-expanded="false" data-requires-ajax="true" data-loaded="false" data-node-id="expandable_branch_30_3231" data-node-key="3231" data-node-type="30" tabindex="-1" aria-selected="false"><span tabindex="-1" id="label_4_31">25 kwiecień - 1 maj</span></p></li><li class="type_structure depth_4 contains_branch" aria-labelledby="label_4_32" tabindex="-1"><p class="tree_item branch" role="treeitem" id="expandable_branch_30_3232" aria-expanded="false" data-requires-ajax="true" data-loaded="false" data-node-id="expandable_branch_30_3232" data-node-key="3232" data-node-type="30" tabindex="-1" aria-selected="false"><span tabindex="-1" id="label_4_32">2 maj - 8 maj</span></p></li><li class="type_structure depth_4 contains_branch" aria-labelledby="label_4_33" tabindex="-1"><p class="tree_item branch" role="treeitem" id="expandable_branch_30_3233" aria-expanded="false" data-requires-ajax="true" data-loaded="false" data-node-id="expandable_branch_30_3233" data-node-key="3233" data-node-type="30" tabindex="-1" aria-selected="false"><span tabindex="-1" id="label_4_33">9 maj - 15 maj</span></p></li><li class="type_structure depth_4 contains_branch" aria-labelledby="label_4_34" tabindex="-1"><p class="tree_item branch" role="treeitem" id="expandable_branch_30_3234" aria-expanded="false" data-requires-ajax="true" data-loaded="false" data-node-id="expandable_branch_30_3234" data-node-key="3234" data-node-type="30" tabindex="-1" aria-selected="false"><span tabindex="-1" id="label_4_34">16 maj - 22 maj</span></p></li><li class="type_structure depth_4 contains_branch" aria-labelledby="label_4_35" tabindex="-1"><p class="tree_item branch" role="treeitem" aria-expanded="true" aria-owns="random5ceb831c539e417_group" tabindex="-1" aria-selected="false"><span tabindex="-1" id="label_4_35">23 maj - 29 maj</span></p><ul id="random5ceb831c539e417_group" role="group" tabindex="-1"><li class="type_activity depth_5 item_with_icon current_branch" aria-labelledby="label_5_36" tabindex="-1"><p class="tree_item hasicon active_tree_node" role="treeitem" tabindex="-1" aria-selected="false"><a tabindex="-1" id="label_5_36" title="Strona" href="https://skos.ii.uni.wroc.pl/mod/page/view.php?id=11909"><img class="icon navicon" alt="Strona" title="Strona" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/icon(1).svg" tabindex="-1"><span class="item-content-wrap" tabindex="-1">Miniprojekt: type-checker dla STLC</span></a></p></li></ul></li><li class="type_structure depth_4 contains_branch" aria-labelledby="label_4_37" tabindex="-1"><p class="tree_item branch" role="treeitem" id="expandable_branch_30_3236" aria-expanded="false" data-requires-ajax="true" data-loaded="false" data-node-id="expandable_branch_30_3236" data-node-key="3236" data-node-type="30" tabindex="-1" aria-selected="false"><span tabindex="-1" id="label_4_37">30 maj - 5 czerwiec</span></p></li></ul></li><li class="type_course depth_3 contains_branch" aria-labelledby="label_3_38" tabindex="-1"><p class="tree_item branch" role="treeitem" id="expandable_branch_20_195" aria-expanded="false" data-requires-ajax="true" data-loaded="false" data-node-id="expandable_branch_20_195" data-node-key="195" data-node-type="20" tabindex="-1" aria-selected="false"><a tabindex="-1" id="label_3_38" title="Principles of Program Analysis 2019" href="https://skos.ii.uni.wroc.pl/course/view.php?id=195">PPA 19</a></p></li><li class="type_course depth_3 contains_branch" aria-labelledby="label_3_39" tabindex="-1"><p class="tree_item branch" role="treeitem" id="expandable_branch_20_137" aria-expanded="false" data-requires-ajax="true" data-loaded="false" data-node-id="expandable_branch_20_137" data-node-key="137" data-node-type="20" tabindex="-1" aria-selected="false"><a tabindex="-1" id="label_3_39" title="Konstrukcja kompilatorów 2018" href="https://skos.ii.uni.wroc.pl/course/view.php?id=137">Kompilatory 18</a></p></li><li class="type_course depth_3 contains_branch" aria-labelledby="label_3_40" tabindex="-1"><p class="tree_item branch" role="treeitem" id="expandable_branch_20_146" aria-expanded="false" data-requires-ajax="true" data-loaded="false" data-node-id="expandable_branch_20_146" data-node-key="146" data-node-type="20" tabindex="-1" aria-selected="false"><a tabindex="-1" id="label_3_40" title="Semantyka języków programowania" href="https://skos.ii.uni.wroc.pl/course/view.php?id=146">SJP18</a></p></li><li class="type_course depth_3 contains_branch" aria-labelledby="label_3_41" tabindex="-1"><p class="tree_item branch" role="treeitem" id="expandable_branch_20_152" aria-expanded="false" data-requires-ajax="true" data-loaded="false" data-node-id="expandable_branch_20_152" data-node-key="152" data-node-type="20" tabindex="-1" aria-selected="false"><a tabindex="-1" id="label_3_41" title="Teoria kategorii" href="https://skos.ii.uni.wroc.pl/course/view.php?id=152">TK</a></p></li><li class="type_course depth_3 contains_branch" aria-labelledby="label_3_42" tabindex="-1"><p class="tree_item branch" role="treeitem" id="expandable_branch_20_121" aria-expanded="false" data-requires-ajax="true" data-loaded="false" data-node-id="expandable_branch_20_121" data-node-key="121" data-node-type="20" tabindex="-1" aria-selected="false"><a tabindex="-1" id="label_3_42" title="Sieci komputerowe 2018" href="https://skos.ii.uni.wroc.pl/course/view.php?id=121">SK 2018</a></p></li><li class="type_course depth_3 contains_branch" aria-labelledby="label_3_43" tabindex="-1"><p class="tree_item branch" role="treeitem" id="expandable_branch_20_110" aria-expanded="false" data-requires-ajax="true" data-loaded="false" data-node-id="expandable_branch_20_110" data-node-key="110" data-node-type="20" tabindex="-1" aria-selected="false"><a tabindex="-1" id="label_3_43" title="Sztuczna inteligencja 2018" href="https://skos.ii.uni.wroc.pl/course/view.php?id=110">AI</a></p></li><li class="type_course depth_3 contains_branch" aria-labelledby="label_3_44" tabindex="-1"><p class="tree_item branch" role="treeitem" id="expandable_branch_20_88" aria-expanded="false" data-requires-ajax="true" data-loaded="false" data-node-id="expandable_branch_20_88" data-node-key="88" data-node-type="20" tabindex="-1" aria-selected="false"><a tabindex="-1" id="label_3_44" title="Programowanie funkcyjne 2017 (efes)" href="https://skos.ii.uni.wroc.pl/course/view.php?id=88">PF17/efes</a></p></li><li class="type_course depth_3 contains_branch" aria-labelledby="label_3_45" tabindex="-1"><p class="tree_item branch" role="treeitem" id="expandable_branch_20_90" aria-expanded="false" data-requires-ajax="true" data-loaded="false" data-node-id="expandable_branch_20_90" data-node-key="90" data-node-type="20" tabindex="-1" aria-selected="false"><a tabindex="-1" id="label_3_45" title="Systemy operacyjne 2017" href="https://skos.ii.uni.wroc.pl/course/view.php?id=90">SO 2017</a></p></li><li class="type_custom depth_3 item_with_icon" aria-labelledby="label_3_49" tabindex="-1"><p class="tree_item hasicon" role="treeitem" tabindex="-1" aria-selected="false"><a tabindex="-1" id="label_3_49" href="https://skos.ii.uni.wroc.pl/my/"><img class="icon navicon" alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/navigationitem.svg" tabindex="-1"><span class="item-content-wrap" tabindex="-1">Więcej...</span></a></p></li></ul></li></ul></li></ul></div></div><span class="skip-block-to" id="sb-1"></span></aside>        </div>
+    </section>
+    </div>
+</div>
+
+<div id="message-drawer-5ceb831c5b18d5ceb831c539e432" class="message-drawer bg-light hidden" aria-expanded="false" aria-hidden="true" data-region="message-drawer" role="region">
+    <div class="drawer-top p-2 border-bottom bg-secondary text-right">
+        <a id="message-drawer-close-5ceb831c5b18d5ceb831c539e432" class="" href="https://skos.ii.uni.wroc.pl/mod/page/view.php?id=11909#" role="button">
+            <img class="icon " alt="Przełącz menu wiadomości" title="Przełącz menu wiadomości" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/window_close.svg">
+        </a>
+    </div>
+    <div class="header-container position-relative" data-region="header-container">
+        <div class="hidden border-bottom px-2 py-3" aria-hidden="true" data-region="view-contacts">
+            <div class="d-flex align-items-center">
+                <div class="align-self-stretch">
+                    <a class="h-100 d-flex align-items-center mr-2" href="https://skos.ii.uni.wroc.pl/mod/page/view.php?id=11909#" data-route-back="" role="button">
+                        <span class="dir-rtl-hide"><img class="icon " alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/collapsed_rtl.svg"></span>
+                        <span class="dir-ltr-hide"><img class="icon " alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/collapsed.svg"></span>                    </a>
+                </div>
+                <div>
+                    Kontakty
+                </div>
+                <div class="ml-auto">
+                    <a href="https://skos.ii.uni.wroc.pl/mod/page/view.php?id=11909#" data-route="view-search" role="button" aria-label="Szukaj">
+                        <img class="icon " alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/search.svg">
+                    </a>
+                </div>
+            </div>
+        </div>        
+        <div class="hidden bg-white position-relative border-bottom px-2 py-2" aria-hidden="true" data-region="view-conversation">
+            <div class="hidden" data-region="header-content"></div>
+            <div class="hidden" data-region="header-edit-mode">
+                
+                <div class="d-flex p-2 align-items-center">
+                    Wybrane wiadomości:
+                    <span class="ml-1" data-region="message-selected-court">1</span>
+                    <button type="button" class="ml-auto close" aria-label="" data-action="cancel-edit-mode">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+            </div>
+            <div data-region="header-placeholder">
+                <div class="d-flex">
+                    <div class="align-self-stretch">
+                        <a class="h-100 mr-2 d-flex align-items-center" href="https://skos.ii.uni.wroc.pl/mod/page/view.php?id=11909#" data-route-back="" role="button">
+                            <span class="dir-rtl-hide"><img class="icon " alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/collapsed_rtl.svg"></span>
+                            <span class="dir-ltr-hide"><img class="icon " alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/collapsed.svg"></span>                        </a>
+                    </div>
+                    <div class="ml-2 rounded-circle bg-pulse-grey align-self-center" style="height: 38px; width: 38px">
+                    </div>
+                    <div class="ml-2 " style="flex: 1">
+                        <div class="mt-1 bg-pulse-grey w-75" style="height: 16px;">
+                        </div>
+                    </div>
+                    <div class="ml-2 bg-pulse-grey align-self-center" style="height: 16px; width: 20px">
+                    </div>
+                </div>
+            </div>
+            <div class="hidden position-absolute" data-region="confirm-dialogue-container" style="top: 0; bottom: -1px; right: 0; left: 0; background: rgba(0,0,0,0.3);"></div>
+        </div>        <div class="border-bottom px-2 py-3" aria-hidden="false" data-region="view-overview">
+            <div class="d-flex align-items-center">
+                <div class="input-prepend d-flex flex-grow m-0">
+                    <span class="add-on bg-white pr-0">
+                        <img class="icon " alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/search.svg">
+                    </span>
+                    <input type="text" class="form-control border-left-0 searchinput" placeholder="Szukaj" aria-label="Szukaj" data-region="view-overview-search-input">
+                </div>
+                <div class="ml-2">
+                    <a href="https://skos.ii.uni.wroc.pl/mod/page/view.php?id=11909#" data-route="view-settings" data-route-param="214" aria-label="Ustawienia" role="button">
+                        <img class="icon " alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/edit.svg">
+                    </a>
+                </div>
+            </div>
+            <div class="text-right mt-3">
+                <a href="https://skos.ii.uni.wroc.pl/mod/page/view.php?id=11909#" data-route="view-contacts" role="button">
+                    <img class="icon " alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/user.svg">
+                    Kontakty
+                    <span class="badge bg-primary ml-2 hidden" data-region="contact-request-count" aria-label="Istnieją 0 oczekujące prośby o kontakt">
+                        0
+                    </span>
+                </a>
+            </div>
+        </div>
+        
+        <div class="hidden border-bottom px-2 py-3 view-search" aria-hidden="true" data-region="view-search">
+            <div class="d-flex align-items-center">
+                <a class="mr-2 align-self-stretch d-flex align-items-center" href="https://skos.ii.uni.wroc.pl/mod/page/view.php?id=11909#" data-route-back="" data-action="cancel-search" role="button">
+                    <span class="dir-rtl-hide"><img class="icon " alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/collapsed_rtl.svg"></span>
+                    <span class="dir-ltr-hide"><img class="icon " alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/collapsed.svg"></span>                </a>
+                <div class="input-append m-0 d-flex flex-grow">
+                    <input type="text" class="form-control border-right-0 searchinput" placeholder="Szukaj" aria-label="Szukaj" data-region="search-input">
+                    <button class="btn m-0" type="button" data-action="search" aria-label="Szukaj">
+                        <span data-region="search-icon-container">
+                            <img class="icon " alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/search.svg">
+                        </span>
+                        <span class="hidden" data-region="loading-icon-container">
+                            <span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>        
+        <div class="hidden border-bottom px-2 py-3" aria-hidden="true" data-region="view-settings">
+            <div class="d-flex align-items-center">
+                <div class="align-self-stretch">
+                    <a class="h-100 d-flex mr-2 align-items-center" href="https://skos.ii.uni.wroc.pl/mod/page/view.php?id=11909#" data-route-back="" role="button">
+                        <span class="dir-rtl-hide"><img class="icon " alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/collapsed_rtl.svg"></span>
+                        <span class="dir-ltr-hide"><img class="icon " alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/collapsed.svg"></span>                    </a>
+                </div>
+                <div>
+                    Ustawienia
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="body-container position-relative" data-region="body-container">
+        
+        <div class="hidden" data-region="view-contact" aria-hidden="true">
+            <div class="p-2 pt-3" data-region="content-container"></div>
+        </div>        <div class="hidden h-100" aria-hidden="true" data-region="view-contacts" data-user-id="214">
+            <div class="d-flex flex-column h-100">
+                <div class="p-3 border-bottom">
+                    <ul class="nav nav-pills d-flex m-0" role="tablist">
+                        <li class="nav-item w-50 align-self-stretch text-center active">
+                            <a id="contacts-tab-5ceb831c5b18d5ceb831c539e432" class="nav-link" href="https://skos.ii.uni.wroc.pl/mod/page/view.php?id=11909#contacts-tab-panel-5ceb831c5b18d5ceb831c539e432" data-toggle="tab" data-action="show-contacts-section" role="tab" aria-controls="contacts-tab-panel-5ceb831c5b18d5ceb831c539e432" aria-selected="true">
+                                Kontakty
+                            </a>
+                        </li>
+                        <li class="nav-item w-50 text-center">
+                            <a id="requests-tab-5ceb831c5b18d5ceb831c539e432" class="nav-link" href="https://skos.ii.uni.wroc.pl/mod/page/view.php?id=11909#requests-tab-panel-5ceb831c5b18d5ceb831c539e432" data-toggle="tab" data-action="show-requests-section" role="tab" aria-controls="requests-tab-panel-5ceb831c5b18d5ceb831c539e432" aria-selected="false">
+                                Prośby
+                                <span class="badge bg-primary ml-2 hidden" data-region="contact-request-count" aria-label="Istnieją 0 oczekujące prośby o kontakt">
+                                    0
+                                </span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="tab-content d-flex flex-column h-100">
+                            <div class="tab-pane fade in active h-100" style="overflow-y: auto" aria-live="polite" data-region="lazy-load-list" data-user-id="214" id="contacts-tab-panel-5ceb831c5b18d5ceb831c539e432" data-section="contacts" role="tabpanel" aria-labelledby="contacts-tab-5ceb831c5b18d5ceb831c539e432">
+            <div class="onepix">
+            </div>
+            
+            <div class="hidden text-center p-2" data-region="empty-message-container">
+                Brak kontaktów
+            </div>
+            <div class="hidden list-group" data-region="content-container">
+                
+            </div>
+            <div class="list-group" data-region="placeholder-container">
+                
+            </div>
+            <div class="w-100 text-center p-3 hidden" data-region="loading-icon-container">
+                <span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+            </div>
+        </div>
+        
+                            <div class="tab-pane fade h-100" style="overflow-y: auto" aria-live="polite" data-region="lazy-load-list" data-user-id="214" id="requests-tab-panel-5ceb831c5b18d5ceb831c539e432" data-section="requests" role="tabpanel" aria-labelledby="requests-tab-5ceb831c5b18d5ceb831c539e432">
+            <div class="onepix">
+            </div>
+            
+            <div class="hidden text-center p-2" data-region="empty-message-container">
+                Brak próśb o kontakt
+            </div>
+            <div class="hidden list-group" data-region="content-container">
+                
+            </div>
+            <div class="list-group" data-region="placeholder-container">
+                
+            </div>
+            <div class="w-100 text-center p-3 hidden" data-region="loading-icon-container">
+                <span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+            </div>
+        </div>
+                </div>
+            </div>
+        </div>        
+        <div class="view-conversation hidden h-100" aria-hidden="true" data-region="view-conversation" data-user-id="214" data-midnight="1558908000" style="overflow-y: auto; overflow-x: hidden">
+            <div class="position-relative h-100" data-region="content-container" style="overflow-y: auto; overflow-x: hidden">
+                <div class="p-3 text-center hidden" data-region="contact-request-sent-message-container">
+                    <p class="m-0">Wysłano prośbę o kontakt</p>
+                    <p class="font-italic font-weight-light" data-region="text"></p>
+                </div>
+                <div class="content-message-container hidden h-100 px-2 pb-2 pt-0" data-region="content-message-container" role="log" style="overflow-y: auto; overflow-x: hidden">
+                    <div class="hidden text-center p-3" data-region="more-messages-loading-icon-container"><span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+</div>
+                </div>
+                <div class="p-4 w-100 h-100 hidden position-absolute" data-region="confirm-dialogue-container" style="top: 0; background: rgba(0,0,0,0.3);">
+                    
+                    <div class="p-3 bg-white" data-region="confirm-dialogue" role="alert">
+                        <h3 class="h6 hidden" data-region="dialogue-header"></h3>
+                        <p class="text-muted" data-region="dialogue-text"></p>
+                        <button type="button" class="btn btn-primary btn-block hidden" data-action="confirm-block">
+                            <span data-region="dialogue-button-text">Blok</span>
+                            <span class="hidden" data-region="loading-icon-container"><span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+</span>
+                        </button>
+                        <button type="button" class="btn btn-primary btn-block hidden" data-action="confirm-unblock">
+                            <span data-region="dialogue-button-text">Odblokuj</span>
+                            <span class="hidden" data-region="loading-icon-container"><span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+</span>
+                        </button>
+                        <button type="button" class="btn btn-primary btn-block hidden" data-action="confirm-remove-contact">
+                            <span data-region="dialogue-button-text">Usuń</span>
+                            <span class="hidden" data-region="loading-icon-container"><span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+</span>
+                        </button>
+                        <button type="button" class="btn btn-primary btn-block hidden" data-action="confirm-add-contact">
+                            <span data-region="dialogue-button-text">Dodaj</span>
+                            <span class="hidden" data-region="loading-icon-container"><span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+</span>
+                        </button>
+                        <button type="button" class="btn btn-primary btn-block hidden" data-action="confirm-delete-selected-messages">
+                            <span data-region="dialogue-button-text">Usuń</span>
+                            <span class="hidden" data-region="loading-icon-container"><span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+</span>
+                        </button>
+                        <button type="button" class="btn btn-primary btn-block hidden" data-action="confirm-delete-conversation">
+                            <span data-region="dialogue-button-text">Usuń</span>
+                            <span class="hidden" data-region="loading-icon-container"><span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+</span>
+                        </button>
+                        <button type="button" class="btn btn-primary btn-block hidden" data-action="request-add-contact">
+                            <span data-region="dialogue-button-text">Wyślij prośbę o kontakt</span>
+                            <span class="hidden" data-region="loading-icon-container"><span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+</span>
+                        </button>
+                        <button type="button" class="btn btn-primary btn-block hidden" data-action="accept-contact-request">
+                            <span data-region="dialogue-button-text">Zaakceptuj i dodaj do kontaktów</span>
+                            <span class="hidden" data-region="loading-icon-container"><span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+</span>
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-block hidden" data-action="decline-contact-request">
+                            <span data-region="dialogue-button-text">Odmów</span>
+                            <span class="hidden" data-region="loading-icon-container"><span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+</span>
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-block" data-action="cancel-confirm">Anuluj</button>
+                    </div>
+                </div>
+                <div class="px-2 pb-2 pt-0" data-region="content-placeholder">
+                    <div class="h-100 d-flex flex-column">
+                        <div class="px-2 pb-2 pt-0 bg-light h-100" style="overflow-y: auto">
+                            <div class="mt-4">
+                                <div class="mb-4">
+                                    <div class="mx-auto bg-white" style="height: 25px; width: 100px"></div>
+                                </div>
+                                <div class="d-flex flex-column p-2 bg-white rounded mb-2">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="mr-2">
+                                            <div class="rounded-circle bg-pulse-grey" style="height: 35px; width: 35px"></div>
+                                        </div>
+                                        <div class="mr-4 w-75 bg-pulse-grey" style="height: 16px"></div>
+                                        <div class="ml-auto bg-pulse-grey" style="width: 35px; height: 16px"></div>
+                                    </div>
+                                    <div class="bg-pulse-grey w-100" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-75 mt-2" style="height: 16px"></div>
+                                </div>
+                                <div class="d-flex flex-column p-2 bg-white rounded mb-2">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="mr-2">
+                                            <div class="rounded-circle bg-pulse-grey" style="height: 35px; width: 35px"></div>
+                                        </div>
+                                        <div class="mr-4 w-75 bg-pulse-grey" style="height: 16px"></div>
+                                        <div class="ml-auto bg-pulse-grey" style="width: 35px; height: 16px"></div>
+                                    </div>
+                                    <div class="bg-pulse-grey w-100" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-75 mt-2" style="height: 16px"></div>
+                                </div>
+                                <div class="d-flex flex-column p-2 bg-white rounded mb-2">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="mr-2">
+                                            <div class="rounded-circle bg-pulse-grey" style="height: 35px; width: 35px"></div>
+                                        </div>
+                                        <div class="mr-4 w-75 bg-pulse-grey" style="height: 16px"></div>
+                                        <div class="ml-auto bg-pulse-grey" style="width: 35px; height: 16px"></div>
+                                    </div>
+                                    <div class="bg-pulse-grey w-100" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-75 mt-2" style="height: 16px"></div>
+                                </div>
+                            </div>                            <div class="mt-4">
+                                <div class="mb-4">
+                                    <div class="mx-auto bg-white" style="height: 25px; width: 100px"></div>
+                                </div>
+                                <div class="d-flex flex-column p-2 bg-white rounded mb-2">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="mr-2">
+                                            <div class="rounded-circle bg-pulse-grey" style="height: 35px; width: 35px"></div>
+                                        </div>
+                                        <div class="mr-4 w-75 bg-pulse-grey" style="height: 16px"></div>
+                                        <div class="ml-auto bg-pulse-grey" style="width: 35px; height: 16px"></div>
+                                    </div>
+                                    <div class="bg-pulse-grey w-100" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-75 mt-2" style="height: 16px"></div>
+                                </div>
+                                <div class="d-flex flex-column p-2 bg-white rounded mb-2">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="mr-2">
+                                            <div class="rounded-circle bg-pulse-grey" style="height: 35px; width: 35px"></div>
+                                        </div>
+                                        <div class="mr-4 w-75 bg-pulse-grey" style="height: 16px"></div>
+                                        <div class="ml-auto bg-pulse-grey" style="width: 35px; height: 16px"></div>
+                                    </div>
+                                    <div class="bg-pulse-grey w-100" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-75 mt-2" style="height: 16px"></div>
+                                </div>
+                                <div class="d-flex flex-column p-2 bg-white rounded mb-2">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="mr-2">
+                                            <div class="rounded-circle bg-pulse-grey" style="height: 35px; width: 35px"></div>
+                                        </div>
+                                        <div class="mr-4 w-75 bg-pulse-grey" style="height: 16px"></div>
+                                        <div class="ml-auto bg-pulse-grey" style="width: 35px; height: 16px"></div>
+                                    </div>
+                                    <div class="bg-pulse-grey w-100" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-75 mt-2" style="height: 16px"></div>
+                                </div>
+                            </div>                            <div class="mt-4">
+                                <div class="mb-4">
+                                    <div class="mx-auto bg-white" style="height: 25px; width: 100px"></div>
+                                </div>
+                                <div class="d-flex flex-column p-2 bg-white rounded mb-2">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="mr-2">
+                                            <div class="rounded-circle bg-pulse-grey" style="height: 35px; width: 35px"></div>
+                                        </div>
+                                        <div class="mr-4 w-75 bg-pulse-grey" style="height: 16px"></div>
+                                        <div class="ml-auto bg-pulse-grey" style="width: 35px; height: 16px"></div>
+                                    </div>
+                                    <div class="bg-pulse-grey w-100" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-75 mt-2" style="height: 16px"></div>
+                                </div>
+                                <div class="d-flex flex-column p-2 bg-white rounded mb-2">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="mr-2">
+                                            <div class="rounded-circle bg-pulse-grey" style="height: 35px; width: 35px"></div>
+                                        </div>
+                                        <div class="mr-4 w-75 bg-pulse-grey" style="height: 16px"></div>
+                                        <div class="ml-auto bg-pulse-grey" style="width: 35px; height: 16px"></div>
+                                    </div>
+                                    <div class="bg-pulse-grey w-100" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-75 mt-2" style="height: 16px"></div>
+                                </div>
+                                <div class="d-flex flex-column p-2 bg-white rounded mb-2">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="mr-2">
+                                            <div class="rounded-circle bg-pulse-grey" style="height: 35px; width: 35px"></div>
+                                        </div>
+                                        <div class="mr-4 w-75 bg-pulse-grey" style="height: 16px"></div>
+                                        <div class="ml-auto bg-pulse-grey" style="width: 35px; height: 16px"></div>
+                                    </div>
+                                    <div class="bg-pulse-grey w-100" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-75 mt-2" style="height: 16px"></div>
+                                </div>
+                            </div>                            <div class="mt-4">
+                                <div class="mb-4">
+                                    <div class="mx-auto bg-white" style="height: 25px; width: 100px"></div>
+                                </div>
+                                <div class="d-flex flex-column p-2 bg-white rounded mb-2">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="mr-2">
+                                            <div class="rounded-circle bg-pulse-grey" style="height: 35px; width: 35px"></div>
+                                        </div>
+                                        <div class="mr-4 w-75 bg-pulse-grey" style="height: 16px"></div>
+                                        <div class="ml-auto bg-pulse-grey" style="width: 35px; height: 16px"></div>
+                                    </div>
+                                    <div class="bg-pulse-grey w-100" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-75 mt-2" style="height: 16px"></div>
+                                </div>
+                                <div class="d-flex flex-column p-2 bg-white rounded mb-2">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="mr-2">
+                                            <div class="rounded-circle bg-pulse-grey" style="height: 35px; width: 35px"></div>
+                                        </div>
+                                        <div class="mr-4 w-75 bg-pulse-grey" style="height: 16px"></div>
+                                        <div class="ml-auto bg-pulse-grey" style="width: 35px; height: 16px"></div>
+                                    </div>
+                                    <div class="bg-pulse-grey w-100" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-75 mt-2" style="height: 16px"></div>
+                                </div>
+                                <div class="d-flex flex-column p-2 bg-white rounded mb-2">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="mr-2">
+                                            <div class="rounded-circle bg-pulse-grey" style="height: 35px; width: 35px"></div>
+                                        </div>
+                                        <div class="mr-4 w-75 bg-pulse-grey" style="height: 16px"></div>
+                                        <div class="ml-auto bg-pulse-grey" style="width: 35px; height: 16px"></div>
+                                    </div>
+                                    <div class="bg-pulse-grey w-100" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-75 mt-2" style="height: 16px"></div>
+                                </div>
+                            </div>                            <div class="mt-4">
+                                <div class="mb-4">
+                                    <div class="mx-auto bg-white" style="height: 25px; width: 100px"></div>
+                                </div>
+                                <div class="d-flex flex-column p-2 bg-white rounded mb-2">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="mr-2">
+                                            <div class="rounded-circle bg-pulse-grey" style="height: 35px; width: 35px"></div>
+                                        </div>
+                                        <div class="mr-4 w-75 bg-pulse-grey" style="height: 16px"></div>
+                                        <div class="ml-auto bg-pulse-grey" style="width: 35px; height: 16px"></div>
+                                    </div>
+                                    <div class="bg-pulse-grey w-100" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-75 mt-2" style="height: 16px"></div>
+                                </div>
+                                <div class="d-flex flex-column p-2 bg-white rounded mb-2">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="mr-2">
+                                            <div class="rounded-circle bg-pulse-grey" style="height: 35px; width: 35px"></div>
+                                        </div>
+                                        <div class="mr-4 w-75 bg-pulse-grey" style="height: 16px"></div>
+                                        <div class="ml-auto bg-pulse-grey" style="width: 35px; height: 16px"></div>
+                                    </div>
+                                    <div class="bg-pulse-grey w-100" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-75 mt-2" style="height: 16px"></div>
+                                </div>
+                                <div class="d-flex flex-column p-2 bg-white rounded mb-2">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="mr-2">
+                                            <div class="rounded-circle bg-pulse-grey" style="height: 35px; width: 35px"></div>
+                                        </div>
+                                        <div class="mr-4 w-75 bg-pulse-grey" style="height: 16px"></div>
+                                        <div class="ml-auto bg-pulse-grey" style="width: 35px; height: 16px"></div>
+                                    </div>
+                                    <div class="bg-pulse-grey w-100" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-100 mt-2" style="height: 16px"></div>
+                                    <div class="bg-pulse-grey w-75 mt-2" style="height: 16px"></div>
+                                </div>
+                            </div>                        </div>
+                    </div>                </div>
+            </div>
+        </div>
+        
+        <div class="hidden" aria-hidden="true" data-region="view-group-info">
+            <div class="pt-3 h-100 d-flex flex-column" data-region="group-info-content-container" style="overflow-y: auto"></div>
+        </div>        <div class="h-100 view-overview-body" aria-hidden="false" data-region="view-overview" data-user-id="214">
+            <div id="message-drawer-view-overview-container" class="d-flex flex-column h-100" style="overflow-y: auto">
+                    
+                    <div class="accordion-group section border-0 " data-region="view-overview-favourites">
+                        <div id="view-overview-favourites-toggle" class="accordion-heading" data-region="toggle">
+                            <button class="btn btn-link w-100 text-left p-2 m-0 d-flex align-items-center overview-section-toggle collapsed" data-toggle="collapse" data-parent="#message-drawer-view-overview-container" data-target="#view-overview-favourites-target" aria-expanded="false" aria-controls="view-overview-favourites-target">
+                                <span class="collapsed-icon-container">
+                                    <img class="icon " alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/collapsed.svg">
+                                </span>
+                                <span class="expanded-icon-container">
+                                    <img class="icon " alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/expanded.svg">
+                                </span>
+                                <strong>Oznaczone gwiazdką</strong>
+                                <small class="hidden ml-1" data-region="section-total-count-container" aria-label=" wszystkich rozmów">
+                                    (<span data-region="section-total-count"></span>)
+                                </small>
+                                <span class="hidden ml-2" data-region="loading-icon-container">
+                                    <span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+                                </span>
+                                <span class="hidden badge badge-pill badge-primary ml-auto bg-primary" data-region="section-unread-count">
+                                    
+                                </span>
+                            </button>
+                        </div>
+                                            <div class=" accordion-body collapse border-bottom " style="overflow-y: auto" aria-live="polite" data-region="lazy-load-list" data-user-id="214" id="view-overview-favourites-target" aria-labelledby="view-overview-favourites-toggle" data-parent="#message-drawer-view-overview-container">
+                        <div class="onepix">
+                        </div>
+                        
+                        <div class="hidden text-center p-2" data-region="empty-message-container">
+                                    <p class="text-muted mt-2">Brak rozmów oznaczonych gwiazdką</p>
+
+                        </div>
+                        <div class="hidden list-group" data-region="content-container">
+                            
+                        </div>
+                        <div class="list-group" data-region="placeholder-container">
+                                    <div class="text-center py-2"><span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+</div>
+
+                        </div>
+                        <div class="w-100 text-center p-3 hidden" data-region="loading-icon-container">
+                            <span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+                        </div>
+                    </div>
+                    </div>
+                    
+                    <div class="accordion-group section border-0 " data-region="view-overview-group-messages">
+                        <div id="view-overview-group-messages-toggle" class="accordion-heading" data-region="toggle">
+                            <button class="btn btn-link w-100 text-left p-2 m-0 d-flex align-items-center overview-section-toggle collapsed" data-toggle="collapse" data-parent="#message-drawer-view-overview-container" data-target="#view-overview-group-messages-target" aria-expanded="false" aria-controls="view-overview-group-messages-target">
+                                <span class="collapsed-icon-container">
+                                    <img class="icon " alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/collapsed.svg">
+                                </span>
+                                <span class="expanded-icon-container">
+                                    <img class="icon " alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/expanded.svg">
+                                </span>
+                                <strong>Grupowe</strong>
+                                <small class="hidden ml-1" data-region="section-total-count-container" aria-label=" wszystkich rozmów">
+                                    (<span data-region="section-total-count"></span>)
+                                </small>
+                                <span class="hidden ml-2" data-region="loading-icon-container">
+                                    <span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+                                </span>
+                                <span class="hidden badge badge-pill badge-primary ml-auto bg-primary" data-region="section-unread-count">
+                                    
+                                </span>
+                            </button>
+                        </div>
+                                            <div class=" accordion-body collapse border-bottom " style="overflow-y: auto" aria-live="polite" data-region="lazy-load-list" data-user-id="214" id="view-overview-group-messages-target" aria-labelledby="view-overview-group-messages-toggle" data-parent="#message-drawer-view-overview-container">
+                        <div class="onepix">
+                        </div>
+                        
+                        <div class="hidden text-center p-2" data-region="empty-message-container">
+                                    <p class="text-muted mt-2">Brak rozmów grupowych</p>
+
+                        </div>
+                        <div class="hidden list-group" data-region="content-container">
+                            
+                        </div>
+                        <div class="list-group" data-region="placeholder-container">
+                                    <div class="text-center py-2"><span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+</div>
+
+                        </div>
+                        <div class="w-100 text-center p-3 hidden" data-region="loading-icon-container">
+                            <span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+                        </div>
+                    </div>
+                    </div>
+                    
+                    <div class="accordion-group section border-0 " data-region="view-overview-messages">
+                        <div id="view-overview-messages-toggle" class="accordion-heading" data-region="toggle">
+                            <button class="btn btn-link w-100 text-left p-2 m-0 d-flex align-items-center overview-section-toggle collapsed" data-toggle="collapse" data-parent="#message-drawer-view-overview-container" data-target="#view-overview-messages-target" aria-expanded="false" aria-controls="view-overview-messages-target">
+                                <span class="collapsed-icon-container">
+                                    <img class="icon " alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/collapsed.svg">
+                                </span>
+                                <span class="expanded-icon-container">
+                                    <img class="icon " alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/expanded.svg">
+                                </span>
+                                <strong>Prywatne</strong>
+                                <small class="hidden ml-1" data-region="section-total-count-container" aria-label=" wszystkich rozmów">
+                                    (<span data-region="section-total-count"></span>)
+                                </small>
+                                <span class="hidden ml-2" data-region="loading-icon-container">
+                                    <span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+                                </span>
+                                <span class="hidden badge badge-pill badge-primary ml-auto bg-primary" data-region="section-unread-count">
+                                    
+                                </span>
+                            </button>
+                        </div>
+                                            <div class=" accordion-body collapse border-bottom " style="overflow-y: auto" aria-live="polite" data-region="lazy-load-list" data-user-id="214" id="view-overview-messages-target" aria-labelledby="view-overview-messages-toggle" data-parent="#message-drawer-view-overview-container">
+                        <div class="onepix">
+                        </div>
+                        
+                        <div class="hidden text-center p-2" data-region="empty-message-container">
+                                    <p class="text-muted mt-2">Brak rozmów prywatnych</p>
+
+                        </div>
+                        <div class="hidden list-group" data-region="content-container">
+                            
+                        </div>
+                        <div class="list-group" data-region="placeholder-container">
+                                    <div class="text-center py-2"><span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+</div>
+
+                        </div>
+                        <div class="w-100 text-center p-3 hidden" data-region="loading-icon-container">
+                            <span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+                        </div>
+                    </div>
+                    </div>
+            </div>
+        </div>
+        
+        <div data-region="view-search" aria-hidden="true" class="h-100 hidden" data-user-id="214" data-users-offset="0" data-messages-offset="0" style="overflow-y: auto">
+            <div class="hidden" data-region="search-results-container" style="overflow-y: auto">
+                
+                <div class="d-flex flex-column">
+                    <div class="mb-3 bg-white" data-region="all-contacts-container">
+                        <div data-region="contacts-container" class="pt-2">
+                            <h4 class="h6 px-2">Kontakty</h4>
+                            <div class="list-group" data-region="list"></div>
+                        </div>
+                        <div data-region="non-contacts-container" class="pt-2 border-top">
+                            <h4 class="h6 px-2">Spoza kontaktów</h4>
+                            <div class="list-group" data-region="list"></div>
+                        </div>
+                        <div class="text-right">
+                            <button class="btn btn-link text-primary" data-action="load-more-users">
+                                <span data-region="button-text">Załaduj więcej</span>
+                                <span data-region="loading-icon-container" class="hidden"><span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="bg-white" data-region="messages-container">
+                        <h4 class="h6 px-2 pt-2">Wiadomości</h4>
+                        <div class="list-group" data-region="list"></div>
+                        <div class="text-right">
+                            <button class="btn btn-link text-primary" data-action="load-more-messages">
+                                <span data-region="button-text">Załaduj więcej</span>
+                                <span data-region="loading-icon-container" class="hidden"><span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+</span>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="hidden p-3 text-center" data-region="no-results-container">Brak wyników</p>
+                </div>            </div>
+            <div class="hidden" data-region="loading-placeholder">
+                <div class="text-center pt-3 icon-size-4"><span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+</div>
+            </div>
+            <div class="p-3 text-center" data-region="empty-message-container">
+                <p>Szukaj osób i wiadomości</p>
+            </div>
+        </div>        
+        <div class="h-100 hidden bg-white" aria-hidden="true" data-region="view-settings">
+            <div class="hidden" data-region="content-container">
+                
+                <div data-region="settings" class="p-3">
+                    <h3 class="h6 font-weight-bold">Prywatność</h3>
+                    <p>Zdecyduj, kto może wysyłać Ci wiadomości</p>
+                    <div data-preference="blocknoncontacts" class="mb-3">
+                            <div class="custom-control custom-radio mb-2">
+                                <input type="radio" name="message_blocknoncontacts" class="custom-control-input" id="block-noncontacts-5ceb831c5b18d5ceb831c539e432-1" value="1">
+                                <label class="custom-control-label ml-2" for="block-noncontacts-5ceb831c5b18d5ceb831c539e432-1">
+                                    Tylko moje kontakty
+                                </label>
+                            </div>
+                            <div class="custom-control custom-radio mb-2">
+                                <input type="radio" name="message_blocknoncontacts" class="custom-control-input" id="block-noncontacts-5ceb831c5b18d5ceb831c539e432-0" value="0">
+                                <label class="custom-control-label ml-2" for="block-noncontacts-5ceb831c5b18d5ceb831c539e432-0">
+                                    Moje kontakty i każdy, kto uczestniczy w moich kursach
+                                </label>
+                            </div>
+                    </div>
+                
+                    <div class="hidden" data-region="notification-preference-container">
+                        <h3 class="mb-2 mt-4 h6 font-weight-bold">Preferencje powiadomień</h3>
+                    </div>
+                
+                    <h3 class="mb-2 mt-4 h6 font-weight-bold">Ogólne</h3>
+                    <div data-preference="entertosend">
+                        <span class="switch">
+                            <input type="checkbox" id="enter-to-send-5ceb831c5b18d5ceb831c539e432">
+                            <label for="enter-to-send-5ceb831c5b18d5ceb831c539e432">
+                                Wciśnij Enter aby wysłać
+                            </label>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div data-region="placeholder-container">
+                
+                <div class="d-flex flex-column p-3">
+                    <div class="w-25 bg-pulse-grey h6" style="height: 18px"></div>
+                    <div class="w-75 bg-pulse-grey mb-4" style="height: 18px"></div>
+                    <div class="mb-3">
+                        <div class="w-100 d-flex mb-3">
+                            <div class="bg-pulse-grey rounded-circle" style="width: 18px; height: 18px"></div>
+                            <div class="bg-pulse-grey w-50 ml-2" style="height: 18px"></div>
+                        </div>
+                        <div class="w-100 d-flex mb-3">
+                            <div class="bg-pulse-grey rounded-circle" style="width: 18px; height: 18px"></div>
+                            <div class="bg-pulse-grey w-50 ml-2" style="height: 18px"></div>
+                        </div>
+                        <div class="w-100 d-flex mb-3">
+                            <div class="bg-pulse-grey rounded-circle" style="width: 18px; height: 18px"></div>
+                            <div class="bg-pulse-grey w-50 ml-2" style="height: 18px"></div>
+                        </div>
+                    </div>
+                    <div class="w-50 bg-pulse-grey h6 mb-3 mt-2" style="height: 18px"></div>
+                    <div class="mb-4">
+                        <div class="w-100 d-flex mb-2 align-items-center">
+                            <div class="bg-pulse-grey w-25" style="width: 18px; height: 27px"></div>
+                            <div class="bg-pulse-grey w-25 ml-2" style="height: 18px"></div>
+                        </div>
+                        <div class="w-100 d-flex mb-2 align-items-center">
+                            <div class="bg-pulse-grey w-25" style="width: 18px; height: 27px"></div>
+                            <div class="bg-pulse-grey w-25 ml-2" style="height: 18px"></div>
+                        </div>
+                    </div>
+                    <div class="w-25 bg-pulse-grey h6 mb-3 mt-2" style="height: 18px"></div>
+                    <div class="mb-3">
+                        <div class="w-100 d-flex mb-2 align-items-center">
+                            <div class="bg-pulse-grey w-25" style="width: 18px; height: 27px"></div>
+                            <div class="bg-pulse-grey w-50 ml-2" style="height: 18px"></div>
+                        </div>
+                    </div>
+                </div>            </div>
+        </div>    </div>
+    <div class="footer-container position-relative" data-region="footer-container">
+        
+        <div class="hidden border-top bg-white position-relative" aria-hidden="true" data-region="view-conversation" data-enter-to-send="0">
+            <div class="hidden p-2" data-region="content-messages-footer-container">
+                
+                <div class="d-flex mt-1">
+                    <textarea dir="auto" data-region="send-message-txt" class="form-control bg-light m-0 flex-grow" rows="3" data-auto-rows="" data-min-rows="3" data-max-rows="5" role="textbox" aria-label="Napisz wiadomość ..." placeholder="Napisz wiadomość ..." style="resize: none"></textarea>
+                    <button class="btn btn-link btn-icon icon-size-3 ml-1 mt-auto" aria-label="Wyślij wiadomość" data-action="send-message">
+                        <span data-region="send-icon-container"><img class="icon " alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/sendmessage.svg"></span>
+                        <span class="hidden" data-region="loading-icon-container"><span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+</span>
+                    </button>
+                </div>
+            </div>
+            <div class="hidden p-2" data-region="content-messages-footer-edit-mode-container">
+                
+                <div class="d-flex p-3">
+                    <button class="btn btn-link btn-icon my-1 icon-size-4 ml-auto" data-action="delete-selected-messages" data-toggle="tooltip" data-placement="top" title="Usuń zaznaczoną wiadomość">
+                        <span data-region="icon-container"><img class="icon " alt="" aria-hidden="true" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/trash.svg"></span>
+                        <span class="hidden" data-region="loading-icon-container"><span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+</span>
+                        <span class="sr-only">Usuń zaznaczoną wiadomość</span>
+                    </button>
+                </div>
+            </div>
+            <div class="hidden bg-secondary p-3" data-region="content-messages-footer-require-contact-container">
+                
+                <div class="p-3 bg-white">
+                    <p data-region="title"></p>
+                    <p class="text-muted" data-region="text"></p>
+                    <button type="button" class="btn btn-primary btn-block" data-action="request-add-contact">
+                        <span data-region="dialogue-button-text">Wyślij prośbę o kontakt</span>
+                        <span class="hidden" data-region="loading-icon-container"><span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+</span>
+                    </button>
+                </div>
+            </div>
+            <div class="hidden bg-secondary p-3" data-region="content-messages-footer-require-unblock-container">
+                
+                <div class="p-3 bg-white">
+                    <p class="text-muted" data-region="text">Zablokowałeś tego użytkownika</p>
+                    <button type="button" class="btn btn-primary btn-block" data-action="request-unblock">
+                        <span data-region="dialogue-button-text">Odblokuj użytkownika</span>
+                        <span class="hidden" data-region="loading-icon-container"><span class="loading-icon icon-no-margin"><img class="icon " alt="Ładowanie" title="Ładowanie" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/loading.gif"></span>
+</span>
+                    </button>
+                </div>
+            </div>
+            <div class="hidden bg-secondary p-3" data-region="content-messages-footer-unable-to-message">
+                
+                <div class="p-3 bg-white">
+                    <p class="text-muted" data-region="text">Nie możesz wysłać wiadomości do tego użytkownika</p>
+                </div>
+            </div>
+            <div class="p-2" data-region="placeholder-container">
+                <div class="d-flex">
+                    <div class="bg-pulse-grey w-100" style="height: 80px"></div>
+                    <div class="mx-2 mb-2 align-self-end bg-pulse-grey" style="height: 20px; width: 20px"></div>
+                </div>            </div>
+            <div class="hidden position-absolute" data-region="confirm-dialogue-container" style="top: -1px; bottom: 0; right: 0; left: 0; background: rgba(0,0,0,0.3);"></div>
+        </div>    </div>
+</div>
+<footer id="page-footer">
+    <div class="page-footer-inner">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="footnote">Serwer SKOS:<br>
+
+<a href="https://michalis.ii.uni.wroc.pl/~michalis/skos_news.php">Nowości i zmiany</a><br>
+
+<a href="https://michalis.ii.uni.wroc.pl/~michalis/skos_docs.php">Dokumentacja</a><br>
+
+<a href="mailto:michalis.kambi%20AT%20gmail.com">Kontakt do admina</a></div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="text-right m-b-10">
+                                                <div class="logininfo">Jesteś zalogowany(a) jako <a href="https://skos.ii.uni.wroc.pl/user/profile.php?id=214" title="Zobacz profil">Kamil Listopad</a> (<a href="https://skos.ii.uni.wroc.pl/login/logout.php?sesskey=NsDoCxodhG">Wyloguj</a>)</div>                    </div>
+                                    </div>
+                <script type="text/javascript">
+//<![CDATA[
+var require = {
+    baseUrl : 'https://skos.ii.uni.wroc.pl/lib/requirejs.php/1554738814/',
+    // We only support AMD modules with an explicit define() statement.
+    enforceDefine: true,
+    skipDataMain: true,
+    waitSeconds : 0,
+
+    paths: {
+        jquery: 'https://skos.ii.uni.wroc.pl/lib/javascript.php/1554738814/lib/jquery/jquery-3.2.1.min',
+        jqueryui: 'https://skos.ii.uni.wroc.pl/lib/javascript.php/1554738814/lib/jquery/ui-1.12.1/jquery-ui.min',
+        jqueryprivate: 'https://skos.ii.uni.wroc.pl/lib/javascript.php/1554738814/lib/requirejs/jquery-private'
+    },
+
+    // Custom jquery config map.
+    map: {
+      // '*' means all modules will get 'jqueryprivate'
+      // for their 'jquery' dependency.
+      '*': { jquery: 'jqueryprivate' },
+      // Stub module for 'process'. This is a workaround for a bug in MathJax (see MDL-60458).
+      '*': { process: 'core/first' },
+
+      // 'jquery-private' wants the real jQuery module
+      // though. If this line was not here, there would
+      // be an unresolvable cyclic dependency.
+      jqueryprivate: { jquery: 'jquery' }
+    }
+};
+
+//]]>
+</script>
+<script type="text/javascript" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/javascript(2).php"></script>
+<script type="text/javascript">
+//<![CDATA[
+require(['core/first'], function() {
+;
+require(["media_videojs/loader"], function(loader) {
+    loader.setUp(function(videojs) {
+        videojs.options.flash.swf = "https://skos.ii.uni.wroc.pl/media/player/videojs/videojs/video-js.swf";
+videojs.addLanguage("pl",{
+ "Play": "Odtwarzaj",
+ "Pause": "Pauza",
+ "Current Time": "Aktualny czas",
+ "Duration Time": "Czas trwania",
+ "Remaining Time": "Pozostały czas",
+ "Stream Type": "Typ strumienia",
+ "LIVE": "NA ŻYWO",
+ "Loaded": "Załadowany",
+ "Progress": "Status",
+ "Fullscreen": "Pełny ekran",
+ "Non-Fullscreen": "Pełny ekran niedostępny",
+ "Mute": "Wyłącz dźwięk",
+ "Unmute": "Włącz dźwięk",
+ "Playback Rate": "Szybkość odtwarzania",
+ "Subtitles": "Napisy",
+ "subtitles off": "Napisy wyłączone",
+ "Captions": "Transkrypcja",
+ "captions off": "Transkrypcja wyłączona",
+ "Chapters": "Rozdziały",
+ "You aborted the media playback": "Odtwarzanie zostało przerwane",
+ "A network error caused the media download to fail part-way.": "Problemy z siecią spowodowały błąd przy pobieraniu materiału wideo.",
+ "The media could not be loaded, either because the server or network failed or because the format is not supported.": "Materiał wideo nie może być załadowany, ponieważ wystąpił problem z siecią lub format nie jest obsługiwany",
+ "The media playback was aborted due to a corruption problem or because the media used features your browser did not support.": "Odtwarzanie materiału wideo zostało przerwane z powodu uszkodzonego pliku wideo lub z powodu błędu funkcji, które nie są wspierane przez przeglądarkę.",
+ "No compatible source was found for this media.": "Dla tego materiału wideo nie znaleziono kompatybilnego źródła.",
+ "Play video": "Odtwarzaj wideo",
+ "Close": "Zamknij",
+ "Modal Window": "Okno Modala",
+ "This is a modal window": "To jest okno modala",
+ "This modal can be closed by pressing the Escape key or activating the close button.": "Ten modal możesz zamknąć naciskając przycisk Escape albo wybierając przycisk Zamknij.",
+ ", opens captions settings dialog": ", otwiera okno dialogowe ustawień transkrypcji",
+ ", opens subtitles settings dialog": ", otwiera okno dialogowe napisów",
+ ", selected": ", zaznaczone"
+});
+
+    });
+});;
+require(["block_navigation/navblock"], function(amd) { amd.init("4"); });;
+require(["block_settings/settingsblock"], function(amd) { amd.init("5", null); });;
+
+require(['core/yui'], function(Y) {
+    M.util.init_skiplink(Y);
+});
+;
+
+require(['core/yui'], function(Y) {
+    Y.use('moodle-core-actionmenu', function() {
+        M.core.actionmenu.init();
+    });
+});
+;
+
+require(['jquery'], function($) {
+    $('#single_select5ceb831c539e429').change(function() {
+        var ignore = $(this).find(':selected').attr('data-ignore');
+        if (typeof ignore === typeof undefined) {
+            $('#single_select_f5ceb831c539e428').submit();
+        }
+    });
+});
+;
+
+require(
+[
+    'jquery',
+    'core_message/message_popover'
+],
+function(
+    $,
+    Popover
+) {
+    var toggle = $('#message-drawer-toggle-5ceb831c5a5b05ceb831c539e430');
+    Popover.init(toggle);
+});
+;
+
+require(
+[
+    'jquery',
+    'core_message/message_drawer',
+    'core_message/message_popover'
+],
+function(
+    $,
+    MessageDrawer,
+    Popover
+) {
+
+    var root = $('#message-drawer-5ceb831c5b18d5ceb831c539e432');
+    MessageDrawer.init(root);
+
+    var toggle = $('#message-drawer-close-5ceb831c5b18d5ceb831c539e432');
+    Popover.init(toggle);
+});
+;
+require(["core/notification"], function(amd) { amd.init(24336, []); });;
+require(["core/log"], function(amd) { amd.setConfig({"level":"warn"}); });;
+require(["core/page_global"], function(amd) { amd.init(); });
+});
+//]]>
+</script>
+<script type="text/javascript" src="./Coq19_ Miniprojekt_ type-checker dla STLC_files/javascript(3).php"></script>
+<script type="text/javascript">
+//<![CDATA[
+M.str = {"moodle":{"lastmodified":"Ostatnia modyfikacja","name":"Nazwa","error":"B\u0142\u0105d","info":"Informacja","yes":"Tak","no":"Nie","viewallcourses":"Zobacz wszystkie kursy","cancel":"Anuluj","morehelp":"Wi\u0119cej pomocy","loadinghelp":"\u0141adowanie ...","confirm":"Potwierd\u017a","areyousure":"Jeste\u015b pewien?","closebuttontitle":"Zamknij","unknownerror":"Nieznany b\u0142\u0105d"},"repository":{"type":"Typ","size":"Rozmiar","invalidjson":"Nieprawid\u0142owy ci\u0105g jSON","nofilesattached":"Nie za\u0142\u0105czono plik\u00f3w","filepicker":"Wyb\u00f3r plik\u00f3w","logout":"Wyloguj si\u0119","nofilesavailable":"Brak dost\u0119pnych plik\u00f3w","norepositoriesavailable":"Niestety, \u017cadne z istniej\u0105cych repozytori\u00f3w nie mo\u017ce zawiera\u0107 plik\u00f3w w wymaganym formacie.","fileexistsdialogheader":"Plik istnieje","fileexistsdialog_editor":"Plik o wybranej nazwie zosta\u0142 ju\u017c za\u0142\u0105czony do tekstu, kt\u00f3ry edytujesz.","fileexistsdialog_filemanager":"Plik o wybranej nazwie ju\u017c zosta\u0142 do\u0142\u0105czony","renameto":"Zmie\u0144 nazw\u0119 na","referencesexist":"Istnieje {$a} skr\u00f3t\u00f3w, kt\u00f3re wykorzystuj\u0105 ten plik jako \u017ar\u00f3d\u0142o.","select":"Wybierz"},"admin":{"confirmdeletecomments":"Zamierzasz usun\u0105\u0107 komentarze, czy jeste\u015b pewien(a)?","confirmation":"Potwierdzenie"},"block":{"addtodock":"Zadokuj","undockitem":"Od\u0142\u0105cz t\u0105 pozycj\u0119","dockblock":"Zadokuj blok {$a}","undockblock":"Od\u0142\u0105cz blok {$a}","undockall":"Od\u0142\u0105cz wszystkie","hidedockpanel":"Ukryj panel dokowania","hidepanel":"Ukryj panel"},"langconfig":{"thisdirectionvertical":"btt"}};
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+(function() {Y.use("moodle-core-dock-loader",function() {M.core.dock.loader.initLoader();
+});
+Y.use("moodle-filter_mathjaxloader-loader",function() {M.filter_mathjaxloader.configure({"mathjaxconfig":"\nMathJax.Hub.Config({\n    config: [\"Accessible.js\", \"Safe.js\"],\n    errorSettings: { message: [\"!\"] },\n    skipStartupTypeset: true,\n    messageStyle: \"none\"\n});\n","lang":"pl"});
+});
+M.util.help_popups.setup(Y);
+Y.use("moodle-core-popuphelp",function() {M.core.init_popuphelp();
+});
+M.util.init_block_hider(Y, {"id":"inst4","title":"Nawigacja","preference":"block4hidden","tooltipVisible":"Ukryj blok Nawigacja","tooltipHidden":"Poka\u017c blok Nawigacja"});
+ M.util.js_pending('random5ceb831c539e433'); Y.on('domready', function() { M.util.js_complete("init");  M.util.js_complete('random5ceb831c539e433'); });
+})();
+//]]>
+</script>
+                <div class="clearfix"></div>
+            </div>
+        </div>
+
+        <div class="tool_dataprivacy"><a href="https://skos.ii.uni.wroc.pl/admin/tool/dataprivacy/summary.php">Podsumowanie przechowywania danych</a></div><a href="https://download.moodle.org/mobile?version=2018120303.08&amp;lang=pl&amp;iosappid=633359593&amp;androidappid=com.moodle.moodlemobile">Pobierz aplikację mobilną</a>    </div>
+
+</footer>
+
+<script>
+
+</script>
+
+
+ <a href="https://skos.ii.uni.wroc.pl/mod/page/view.php?id=11909#top" class="back-to-top"><i class="fa fa-angle-up "></i></a>
+
+
+</body><span class="gr__tooltip"><span class="gr__tooltip-content"></span><i class="gr__tooltip-logo"></i><span class="gr__triangle"></span></span></html>
