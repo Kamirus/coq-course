@@ -12,7 +12,7 @@ Definition bind {A B : Type} (a : option A) (f : A -> option B) : option B :=
     | None => None
   end.
   
-Definition guard (b : bool) := if b then Some unit else None.
+Definition guard (b : bool) : option unit := if b then Some tt else None.
 
 Hint Unfold ret bind guard.
 
@@ -36,6 +36,8 @@ Ltac ind_rem h b Hb :=
   induction b;
   cbn in *;
   try_inv.
+
+Ltac di h := destruct h; try_inv; cbn in *.
 
 (* main *)
 
@@ -101,12 +103,12 @@ Fixpoint infer (G : ctx) (M : term) : option type :=
     | _ => None
     end
   end
-with check (G : ctx) (M : term) (A : type) : option type :=
+with check (G : ctx) (M : term) (A : type) : option unit :=
   match M with
   | termvar x =>
     a <-- lookup G x ;
     m <-- guard (type_eq A a) ; 
-    ret A
+    ret tt
   | lam x a N => 
     match A with
     | a' ~> b =>
@@ -127,19 +129,68 @@ with check (G : ctx) (M : term) (A : type) : option type :=
   end
 .
 
-Definition x := termvar "x"%string.
-Definition y := termvar "y"%string.
-Definition z := termvar "z"%string.
-Definition a := typevar "a"%string.
-Definition b := typevar "b"%string.
-Definition c := typevar "c"%string.
-Compute infer nil (lam "x"%string a x).
+Definition vx := termvar "x"%string.
+Definition vy := termvar "y"%string.
+Definition vz := termvar "z"%string.
+Definition va := typevar "a"%string.
+Definition vb := typevar "b"%string.
+Definition vc := typevar "c"%string.
+Compute infer nil (lam "x"%string va vx).
 Compute infer nil 
-  (lam "x"%string (b ~> c) 
-    (lam "y"%string (a ~> b)
-      (lam "z"%string a (x · (y · z))))).
+  (lam "x"%string (vb ~> vc) 
+    (lam "y"%string (va ~> vb)
+      (lam "z"%string va (vx · (vy · vz))))).
 
-(* Lemma check_to_infer : forall G M, check G M a = Some b *)
+Lemma from_guard_type_eq : forall a b, Some tt = guard (type_eq a b) -> a = b.
+Proof.
+  intros.
+  generalize dependent b. induction a; intros. 
+  { ind_rem (type_eq (typevar v) b) t Ht. di b. di (string_dec v v0). }
+  { ind_rem (type_eq (a1 ~> a2) b) t Ht. di b. 
+    ind_rem (type_eq a1 b1) t1 Ht1.
+    assert (guard (type_eq a1 b1) = Some tt). rewrite <- Ht1; auto.
+    assert (guard (type_eq a2 b2) = Some tt). rewrite <- Ht; auto.
+    rewrite IHa1 with b1; auto.
+    rewrite IHa2 with b2; auto.
+  }
+  Qed.
+
+Lemma check_lam : forall G v t M a, check G (lam v t M) a = Some tt ->
+  exists b, a = t ~> b /\ check ((v, t) :: G) M b = Some tt.
+Proof.
+  intros.
+  cbn in H.
+  di a.
+  ind_rem (guard (type_eq a1 t)) g Hg.
+  exists a2. split; auto.
+  di a; apply from_guard_type_eq in Hg. rewrite Hg. reflexivity.
+  Qed.
+
+Lemma check_app : forall G M1 M2 a, check G (M1 · M2) a = Some tt ->
+  exists b, infer G M1 = Some (b ~> a) /\ check G M2 b = Some tt.
+Proof.
+  intros.
+  ind_rem (check G (M1 · M2) a) ch Hch.
+  ind_rem (infer G M1) im1 Him1.
+  di a1.
+  ind_rem (guard (type_eq a1_2 a)) g Hg.
+  di a1; apply from_guard_type_eq in Hg. subst.
+  exists a1_1. di a0.
+  Qed.
+
+Lemma check_to_infer : forall G M a, check G M a = Some tt -> infer G M = Some a.
+Proof.
+  intros. generalize dependent a. generalize dependent G.
+  induction M; intros.
+  - cbn in *. di (lookup G v).
+    ind_rem (guard (type_eq a t)) eqat Heq.
+    di a0. apply from_guard_type_eq in Heq. subst. auto.
+  - apply check_lam in H; destruct H as [b H]; destruct H as [Ha H].
+    cbn.
+    apply IHM in H. rewrite H. cbn. rewrite Ha. reflexivity.
+  - apply check_app in H; destruct H as [b H]; destruct H as [Hi Hc].
+    cbn. rewrite Hi. rewrite Hc. cbn. auto.
+  Qed.
 
 Lemma infer_lam : forall G v t M a, infer G (lam v t M) = Some a ->
   exists b, a = t ~> b /\ infer ((v, t) :: G) M = Some b.
@@ -148,39 +199,43 @@ Proof.
   cbn in H.
   ind_rem (infer ((v, t) :: G) M) im Him.
   inversion H; subst; clear H.
-  exists a1; auto.
+  exists a0; auto.
   Qed.
 
 Lemma infer_app : forall G M1 M2 a, infer G (M1 · M2) = Some a ->
-  exists b c, infer G M1 = Some (b ~> a) /\ check G M2 b = Some c.
+  exists b, infer G M1 = Some (b ~> a) /\ check G M2 b = Some tt.
 Proof.
   intros.
   ind_rem (infer G (M1 · M2)) im Him.
   ind_rem (infer G M1) im1 Him1.
-  destruct a2; try_inv.
-  ind_rem (check G M2 a2_1) cm2 Hcm2.
+  di a1.
+  ind_rem (check G M2 a1_1) cm2 Hcm2.
   inversion H. inversion Him. subst. clear H Him.
-  exists a2_1. exists a2.
+  destruct a1.
+  exists a1_1.
   auto.
   Qed.
 
 Lemma infer_ok : forall G M a, infer G M = Some a -> has_type G M a.
 Proof.
-  intros. generalize dependent a0. generalize dependent G.
+  intros. generalize dependent a. generalize dependent G.
   induction M; intros.
-  - constructor. admit.
+  - constructor. cbn in H. auto.
   - apply infer_lam in H as H1; destruct H1 as [ b H1 ];
       destruct H1 as [H0 H1]; rewrite H0 in *; clear H0.
     constructor.
     apply IHM.
     assumption.
   - apply infer_app in H as H1; 
-      destruct H1 as [b H1]; destruct H1 as [c H1]; destruct H1 as [H1 H2].
+      destruct H1 as [b H1]; destruct H1 as [H1 H2].
+    apply app_has_type with b.
+    + apply IHM1. assumption.
+    + apply check_to_infer in H2. apply IHM2. auto.
   Qed.
 
-Theorem typecheck : forall (G : ctx) (M : term), option { A : type | has_type G M A }.
-Proof.
-  intros.
-  case (infer G M).
-  - intro.
-  Qed.
+Definition typecheck (G : ctx) (M : term) : option { A : type | has_type G M A }.
+  ind_rem (infer G M) o H.
+  - refine (Some (exist _ a _)).
+    apply infer_ok. auto.
+  - refine None.
+Defined.
