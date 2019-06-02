@@ -22,6 +22,10 @@ Notation "X <-- A ; B" :=
   (bind A (fun X => B))
   (right associativity, at level 60).
 
+Notation "A ;; B" :=
+  (bind A (fun _ => B))
+  (right associativity, at level 60).
+
 (* tactics *)
 
 Ltac try_inv :=
@@ -48,6 +52,7 @@ Eval compute in (if string_dec "a" "a" then 1 else 2). (* porównanie napisów *
 *)
 
 Inductive type :=
+| typebool : type
 | typevar : var -> type
 | typelam : type -> type -> type
 .
@@ -57,12 +62,15 @@ Notation "a ~> b" :=
 .
 Fixpoint type_eq (a b : type) : bool :=
   match a, b with
+  | typebool, typebool => true
   | typevar x, typevar y => if string_dec x y then true else false
   | a1 ~> a2, b1 ~> b2 => andb (type_eq a1 b1) (type_eq a2 b2)
   | _, _ => false
   end
 .
 Inductive term :=
+| termbool : bool -> term
+| termif : term -> term -> term -> term
 | termvar : var -> term
 | lam : var -> type -> term -> term
 | termapp : term -> term -> term
@@ -80,6 +88,12 @@ Fixpoint lookup (G : ctx) (x : var) : option type :=
   end
 .
 Inductive has_type : ctx -> term -> type -> Prop :=
+| bool_has_type : forall G b, has_type G (termbool b) typebool
+| if_has_type : forall G b c1 c2 a,
+  has_type G b typebool ->
+  has_type G c1 a -> 
+  has_type G c2 a -> 
+  has_type G (termif b c1 c2) a
 | var_has_type : forall G x a, lookup G x = Some a -> has_type G (termvar x) a
 | lam_has_type : forall G x M (a b : type),
   has_type ((x, b) :: G) M a ->
@@ -91,6 +105,12 @@ Hint Constructors has_type term type.
 
 Fixpoint infer (G : ctx) (M : term) : option type :=
   match M with
+  | termbool _ => Some typebool
+  | termif b c1 c2 =>
+    check G b typebool ;;
+    a <-- infer G c1 ;
+    check G c2 a ;;
+    ret a
   | termvar x => lookup G x
   | lam x a N => 
     b <-- infer ((x, a) :: G) N ;
@@ -98,28 +118,35 @@ Fixpoint infer (G : ctx) (M : term) : option type :=
   | M1 · M2 => 
     match infer G M1 with
     | Some (a ~> b) => 
-      a' <-- check G M2 a ;
+      check G M2 a ;;
       ret b
     | _ => None
     end
   end
 with check (G : ctx) (M : term) (A : type) : option unit :=
   match M with
+  | termbool _ =>
+    guard (type_eq A typebool) ;;
+    ret tt
+  | termif b c1 c2 =>
+    check G b typebool ;;
+    check G c1 A ;;
+    check G c2 A
   | termvar x =>
     a <-- lookup G x ;
-    m <-- guard (type_eq A a) ; 
+    guard (type_eq A a) ;;
     ret tt
   | lam x a N => 
     match A with
     | a' ~> b =>
-      m <-- guard (type_eq a' a) ;
+      guard (type_eq a' a) ;;
       check ((x, a) :: G) N b
     | _ => None
     end
   | M1 · M2 => 
     match infer G M1 with
     | Some (a2 ~> a) => 
-      m <-- guard (type_eq a A) ;
+      guard (type_eq a A) ;;
       check G M2 a2
     | _ => None
     end
@@ -144,7 +171,8 @@ Compute infer nil
 Lemma from_guard_type_eq : forall a b, Some tt = guard (type_eq a b) -> a = b.
 Proof.
   intros.
-  generalize dependent b. induction a; intros. 
+  generalize dependent b. induction a; intros.
+  { ind_rem (type_eq typebool b) t Ht. di b. } 
   { ind_rem (type_eq (typevar v) b) t Ht. di b. di (string_dec v v0). }
   { ind_rem (type_eq (a1 ~> a2) b) t Ht. di b. 
     ind_rem (type_eq a1 b1) t1 Ht1.
@@ -182,6 +210,15 @@ Lemma check_to_infer : forall G M a, check G M a = Some tt -> infer G M = Some a
 Proof.
   intros. generalize dependent a. generalize dependent G.
   induction M; intros.
+  - cbn in *.
+    ind_rem (guard (type_eq a typebool)) t Ht. di a0.
+    apply from_guard_type_eq in Ht. subst. auto.
+  - cbn in *.
+    di (check G M1 typebool).
+    ind_rem (check G M2 a) m2 Hm2. di a0.
+    apply eq_sym in Hm2.
+    apply IHM2 in Hm2 as Hcm2. apply IHM3 in H.
+    rewrite Hcm2. cbn. rewrite Hm2. cbn. auto. 
   - cbn in *. di (lookup G v).
     ind_rem (guard (type_eq a t)) eqat Heq.
     di a0. apply from_guard_type_eq in Heq. subst. auto.
@@ -220,6 +257,16 @@ Lemma infer_ok : forall G M a, infer G M = Some a -> has_type G M a.
 Proof.
   intros. generalize dependent a. generalize dependent G.
   induction M; intros.
+  - cbn in H. inversion H. constructor.
+  - cbn in H.
+    ind_rem (check G M1 typebool) cm1 Hcm1. di a0.
+    ind_rem (infer G M2) im2 Him2.
+    ind_rem (check G M3 a0) cm3 Hcm3. di a1.
+    inversion H. subst. clear H.
+    apply eq_sym in Hcm1. apply check_to_infer in Hcm1. apply IHM1 in Hcm1.
+    apply eq_sym in Hcm3. apply check_to_infer in Hcm3. apply IHM3 in Hcm3.
+    apply eq_sym in Him2. apply IHM2 in Him2.
+    constructor; assumption.
   - constructor. cbn in H. auto.
   - apply infer_lam in H as H1; destruct H1 as [ b H1 ];
       destruct H1 as [H0 H1]; rewrite H0 in *; clear H0.
