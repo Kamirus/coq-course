@@ -11,7 +11,7 @@ Definition bind {A B : Type} (a : option A) (f : A -> option B) : option B :=
     | Some x => f x
     | None => None
   end.
-  
+
 Definition guard (b : bool) : option unit := if b then Some tt else None.
 
 Hint Unfold ret bind guard.
@@ -217,8 +217,9 @@ Proof.
     di (check G M1 typebool).
     ind_rem (check G M2 a) m2 Hm2. di a0.
     apply eq_sym in Hm2.
-    apply IHM2 in Hm2 as Hcm2. apply IHM3 in H.
-    rewrite Hcm2. cbn. rewrite Hm2. cbn. auto. 
+    apply IHM2 in Hm2 as Hcm2. 
+    (* apply IHM3 in H. *)
+    rewrite Hcm2. cbn. rewrite H. cbn. auto. 
   - cbn in *. di (lookup G v).
     ind_rem (guard (type_eq a t)) eqat Heq.
     di a0. apply from_guard_type_eq in Heq. subst. auto.
@@ -252,6 +253,33 @@ Proof.
   exists a1_1.
   auto.
   Qed.
+
+(* Lemma infer_check_ok : forall M G a, 
+  infer G M = Some a /\ check G M a = Some tt -> has_type G M a.
+Proof.
+  induction M; intros; destruct H as [ Hi Hc ].
+  - cbn in Hi. inversion Hi. constructor.
+  - cbn in Hi.
+    ind_rem (check G M1 typebool) cm1 Hcm1. di a0.
+    ind_rem (infer G M2) im2 Him2.
+    ind_rem (check G M3 a0) cm3 Hcm3. di a1.
+    inversion H. subst. clear H.
+    apply eq_sym in Hcm1. apply check_to_infer in Hcm1. apply IHM1 in Hcm1.
+    apply eq_sym in Hcm3. apply check_to_infer in Hcm3. apply IHM3 in Hcm3.
+    apply eq_sym in Him2. apply IHM2 in Him2.
+    constructor; assumption.
+  - constructor. cbn in H. auto.
+  - apply infer_lam in H as H1; destruct H1 as [ b H1 ];
+      destruct H1 as [H0 H1]; rewrite H0 in *; clear H0.
+    constructor.
+    apply IHM.
+    assumption.
+  - apply infer_app in H as H1; 
+      destruct H1 as [b H1]; destruct H1 as [H1 H2].
+    apply app_has_type with b.
+    + apply IHM1. assumption.
+    + apply check_to_infer in H2. apply IHM2. auto.
+  Qed. *)
 
 Lemma infer_ok : forall G M a, infer G M = Some a -> has_type G M a.
 Proof.
