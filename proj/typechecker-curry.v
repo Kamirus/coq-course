@@ -40,10 +40,10 @@ Ltac ind_rem h b Hb :=
   remember h as b eqn:Hb;
   (* apply eq_sym in Hb; *)
   induction b;
-  cbn in *;
+  (* cbn in *; *)
   try_inv.
 
-Ltac di h := destruct h; try_inv; cbn in *.
+Ltac di h := destruct h; try_inv.
 
 (* main *)
 
@@ -214,6 +214,30 @@ Proof.
 Hint Rewrite from_guard_type_eq.
 Hint Resolve from_guard_type_eq.
 
+Lemma unfold_infer_app : forall M1 M2 G,
+  infer G (term_to_iterm (M1 · M2)) = 
+    [a, b] <-~ infer G (term_to_iterm M1) ;
+    check G (C (term_to_iterm M2)) a ;;
+    ret b.
+Proof. auto. Qed.
+
+Lemma unfold_check_app : forall G M1 M2 A,
+  check G (C (term_to_iterm (M1 · M2))) A =
+    match infer G (term_to_iterm M2) with
+    | Some a => 
+      check G (C (term_to_iterm M1)) (a ~> A)
+    | None => 
+      (* default as below *)
+      a <-- infer G (term_to_iterm (M1 · M2)) ;
+      guard (type_eq A a)
+    end.
+Proof. auto. Qed.
+
+Ltac app IH H := 
+  (apply eq_sym in H + idtac);
+  (eapply or_introl in H + eapply or_intror in H + idtac);
+  eapply IH in H.
+
 Lemma infer_check_prim : forall M G A,
   (infer G (term_to_iterm M) = Some A
   \/ check G (C (term_to_iterm M)) A = Some tt) ->
@@ -231,142 +255,35 @@ Proof.
   - destruct H; cbn in H; try_inv.
     destruct A. inversion H.
     auto.
-  - destruct H; cbn in H.
-    + 
-      ind_rem (infer G (term_to_iterm M1)) im1 Him1.
-      di a.
-      ind_rem (
-        match term_to_iterm M2 with
-        | itermbool _ => a <-- infer G (term_to_iterm M2); guard (type_eq a1 a)
-        | itermvar _ => a <-- infer G (term_to_iterm M2); guard (type_eq a1 a)
-        | ilam x N =>
-            match a1 with
-            | typebool => None
-            | a ~> b => check ((x, a) :: G) N b
-            end
-        | itermapp cM1 c =>
-            match c with
-            | C M3 =>
-                match infer G M3 with
-                | Some a => check G cM1 (a ~> a1)
-                | None => a <-- infer G (term_to_iterm M2); guard (type_eq a1 a)
-                end
-            end
-        end
-      ) cm2 Hcm2. cbn in *. inversion H. subst. clear H.
-      apply eq_sym in Hcm2.
-      eapply or_intror in Hcm2. di a. eapply IHM2 in Hcm2.
-      apply eq_sym in Him1.
-      eapply or_introl in Him1. eapply IHM1 in Him1.
-      eapply app_has_type; eauto.
-    + ind_rem (infer G (term_to_iterm M2)) im2 Him2.
-      eapply or_intror in H.
-      eapply IHM1 in H.
+  - destruct H.
+    + rewrite unfold_infer_app in H.
+      ind_rem (infer G (term_to_iterm M1)) im1 Him1. di a.
+      ind_rem (check G (C (term_to_iterm M2)) a1) cm2 Hcm2.
+      cbn in H. inversion H. subst. clear H. di a.
+      app IHM1 Him1.
+      app IHM2 Hcm2.
+      econstructor; eauto.
+    + rewrite unfold_check_app in H.
+      ind_rem (infer G (term_to_iterm M2)) m2 Hm2.
+      { app IHM2 Hm2. app IHM1 H. econstructor; eauto. }
+      { ind_rem (infer G (term_to_iterm (M1 · M2))) m Hm.
+        cbn in H. apply from_guard_type_eq in H. subst.
+        rename Hm into H. rename a into A. apply eq_sym in H.
+        (* duplicate 1st plus case *)
+        rewrite unfold_infer_app in H.
+        ind_rem (infer G (term_to_iterm M1)) im1 Him1. di a.
+        ind_rem (check G (C (term_to_iterm M2)) a1) cm2 Hcm2.
+        cbn in H. inversion H. subst. clear H. di a.
+        app IHM1 Him1.
+        app IHM2 Hcm2.
+        econstructor; eauto.
+      }
   Qed.
 
-
-
-Lemma check_lam : forall G v t M a, check G (lam v t M) a = Some tt ->
-  exists b, a = t ~> b /\ check ((v, t) :: G) M b = Some tt.
-Proof.
-  intros.
-  cbn in H.
-  di a.
-  ind_rem (guard (type_eq a1 t)) g Hg.
-  exists a2. split; auto.
-  di a; apply from_guard_type_eq in Hg. rewrite Hg. reflexivity.
-  Qed.
-
-Lemma check_app : forall G M1 M2 a, check G (M1 · M2) a = Some tt ->
-  exists b, infer G M1 = Some (b ~> a) /\ check G M2 b = Some tt.
-Proof.
-  intros.
-  ind_rem (check G (M1 · M2) a) ch Hch.
-  ind_rem (infer G M1) im1 Him1.
-  di a1.
-  ind_rem (guard (type_eq a1_2 a)) g Hg.
-  di a1; apply from_guard_type_eq in Hg. subst.
-  exists a1_1. di a0.
-  Qed.
-
-Lemma check_to_infer : forall G M a, check G M a = Some tt -> infer G M = Some a.
-Proof.
-  intros. generalize dependent a. generalize dependent G.
-  induction M; intros.
-  - cbn in *.
-    ind_rem (guard (type_eq a typebool)) t Ht. di a0.
-    apply from_guard_type_eq in Ht. subst. auto.
-  - cbn in *.
-    di (check G M1 typebool).
-    ind_rem (check G M2 a) m2 Hm2. di a0.
-    apply eq_sym in Hm2.
-    apply IHM2 in Hm2 as Hcm2. 
-    (* apply IHM3 in H. *)
-    rewrite Hcm2. cbn. rewrite H. cbn. auto. 
-  - cbn in *. di (lookup G v).
-    ind_rem (guard (type_eq a t)) eqat Heq.
-    di a0. apply from_guard_type_eq in Heq. subst. auto.
-  - apply check_lam in H; destruct H as [b H]; destruct H as [Ha H].
-    cbn.
-    apply IHM in H. rewrite H. cbn. rewrite Ha. reflexivity.
-  - apply check_app in H; destruct H as [b H]; destruct H as [Hi Hc].
-    cbn. rewrite Hi. rewrite Hc. cbn. auto.
-  Qed.
-
-Lemma infer_lam : forall G v t M a, infer G (lam v t M) = Some a ->
-  exists b, a = t ~> b /\ infer ((v, t) :: G) M = Some b.
-Proof.
-  intros.
-  cbn in H.
-  ind_rem (infer ((v, t) :: G) M) im Him.
-  inversion H; subst; clear H.
-  exists a0; auto.
-  Qed.
-
-Lemma infer_app : forall G M1 M2 a, infer G (M1 · M2) = Some a ->
-  exists b, infer G M1 = Some (b ~> a) /\ check G M2 b = Some tt.
-Proof.
-  intros.
-  ind_rem (infer G (M1 · M2)) im Him.
-  ind_rem (infer G M1) im1 Him1.
-  di a1.
-  ind_rem (check G M2 a1_1) cm2 Hcm2.
-  inversion H. inversion Him. subst. clear H Him.
-  destruct a1.
-  exists a1_1.
-  auto.
-  Qed.
-
-Lemma infer_ok : forall G M a, infer G M = Some a -> has_type G M a.
-Proof.
-  intros. generalize dependent a. generalize dependent G.
-  induction M; intros.
-  - cbn in H. inversion H. constructor.
-  - cbn in H.
-    ind_rem (check G M1 typebool) cm1 Hcm1. di a0.
-    ind_rem (infer G M2) im2 Him2.
-    ind_rem (check G M3 a0) cm3 Hcm3. di a1.
-    inversion H. subst. clear H.
-    apply eq_sym in Hcm1. apply check_to_infer in Hcm1. apply IHM1 in Hcm1.
-    apply eq_sym in Hcm3. apply check_to_infer in Hcm3. apply IHM3 in Hcm3.
-    apply eq_sym in Him2. apply IHM2 in Him2.
-    constructor; assumption.
-  - constructor. cbn in H. auto.
-  - apply infer_lam in H as H1; destruct H1 as [ b H1 ];
-      destruct H1 as [H0 H1]; rewrite H0 in *; clear H0.
-    constructor.
-    apply IHM.
-    assumption.
-  - apply infer_app in H as H1; 
-      destruct H1 as [b H1]; destruct H1 as [H1 H2].
-    apply app_has_type with b.
-    + apply IHM1. assumption.
-    + apply check_to_infer in H2. apply IHM2. auto.
-  Qed.
-
-Definition typecheck (G : ctx) (M : term) : option { A : type | has_type G M A }.
-  ind_rem (infer G M) o H.
-  - refine (Some (exist _ a _)).
-    apply infer_ok. auto.
-  - refine None.
+Definition Infer G M : option { A : type | has_type G M A }.
+  ind_rem (infer G (term_to_iterm M)) m Hm.
+  - apply Some. econstructor. app infer_check_prim Hm. eauto.
+  - apply None.
 Defined.
+
+Print Infer.
