@@ -55,7 +55,6 @@ Eval compute in (if string_dec "a" "a" then 1 else 2). (* porównanie napisów *
 
 Inductive type :=
 | typebool : type
-(* | typevar : var -> type *)
 | typelam : type -> type -> type
 .
 Notation "a ~> b" :=
@@ -74,14 +73,14 @@ Notation "'[' a ',' b ']' <-~ A ; B" :=
 Fixpoint type_eq (a b : type) : bool :=
   match a, b with
   | typebool, typebool => true
-  (* | typevar x, typevar y => if string_dec x y then true else false *)
   | a1 ~> a2, b1 ~> b2 => andb (type_eq a1 b1) (type_eq a2 b2)
   | _, _ => false
   end
 .
 Inductive term :=
 | termbool : bool -> term
-(* | termif : term -> term -> term -> term *)
+| termif : term -> term -> term -> term
+| termann : term -> type -> term
 | termvar : var -> term
 | lam : var -> term -> term
 | termapp : term -> term -> term
@@ -100,11 +99,14 @@ Fixpoint lookup (G : ctx) (x : var) : option type :=
 .
 Inductive has_type : ctx -> term -> type -> Prop :=
 | bool_has_type : forall G b, has_type G (termbool b) typebool
-(* | if_has_type : forall G b c1 c2 a,
+| if_has_type : forall G b c1 c2 a,
   has_type G b typebool ->
   has_type G c1 a -> 
   has_type G c2 a -> 
-  has_type G (termif b c1 c2) a *)
+  has_type G (termif b c1 c2) a
+| ann_has_type : forall G M a,
+  has_type G M a ->
+  has_type G (termann M a) a
 | var_has_type : forall G x a, lookup G x = Some a -> has_type G (termvar x) a
 | lam_has_type : forall G x M (a b : type),
   has_type ((x, b) :: G) M a ->
@@ -116,7 +118,8 @@ Hint Constructors has_type term type.
 
 Inductive iterm :=
 | itermbool : bool -> iterm
-(* | itermif : cterm -> cterm -> cterm -> iterm *)
+| itermif : cterm -> cterm -> cterm -> iterm
+| itermann : cterm -> type -> iterm
 | itermvar : var -> iterm
 | ilam : var -> cterm -> iterm
 | itermapp : cterm -> cterm -> iterm
@@ -130,7 +133,8 @@ Fixpoint term_to_iterm M :=
   let I x := C (term_to_iterm x) in
   match M with
   | termbool b => itermbool b
-  (* | termif b c1 c2 => itermif (I b) (I c1) (I c2) *)
+  | termif b c1 c2 => itermif (I b) (I c1) (I c2)
+  | termann M a => itermann (I M) a
   | termvar x => itermvar x
   | lam x N => ilam x (I N)
   | termapp M1 M2 => itermapp (I M1) (I M2)
@@ -147,7 +151,8 @@ Fixpoint iterm_to_term iM :=
   let T x := iterm_to_term (unC x) in
   match iM with
   | itermbool b => termbool b
-  (* | itermif (C b) (C c1) (C c2) => termif (T b) (T c1) (T c2) *)
+  | itermif b c1 c2 => termif (T b) (T c1) (T c2)
+  | itermann M a => termann (T M) a
   | itermvar x => termvar x
   | ilam x cN => lam x (T cN)
   | itermapp cM1 cM2 => (T cM1) · (T cM2)
@@ -157,11 +162,14 @@ Fixpoint iterm_to_term iM :=
 Fixpoint infer (G : ctx) (M : iterm) : option type :=
   match M with
   | itermbool _ => ret typebool
-  (* | itermif cb (C c1) cc2 =>
+  | itermif cb (C c1) cc2 =>
     check G cb typebool ;;
     a <-- infer G c1 ;
     check G cc2 a ;;
-    ret a *)
+    ret a
+  | itermann cN a => 
+    check G cN a ;;
+    ret a
   | itermvar x => lookup G x
   | ilam x (C N) => None
   | itermapp (C M1) cM2 => 
@@ -233,10 +241,34 @@ Lemma unfold_check_app : forall G M1 M2 A,
     end.
 Proof. auto. Qed.
 
+Lemma unfold_infer_if : forall G M1 M2 M3,
+  infer G (term_to_iterm (termif M1 M2 M3)) = 
+    check G (C (term_to_iterm M1)) typebool ;;
+    a <-- infer G (term_to_iterm M2) ;
+    check G (C (term_to_iterm M3)) a ;;
+    ret a.
+Proof. auto. Qed.
+
+Lemma unfold_check_if : forall G M1 M2 M3 A,
+  check G (C (term_to_iterm (termif M1 M2 M3))) A = 
+    a <-- infer G ((term_to_iterm (termif M1 M2 M3))) ;
+    guard (type_eq A a).
+Proof. auto. Qed.
+
 Ltac app IH H := 
   (apply eq_sym in H + idtac);
   (eapply or_introl in H + eapply or_intror in H + idtac);
   eapply IH in H.
+
+Ltac fold_cbn t H :=
+  let o := fresh "o" in
+  let Ho := fresh "Ho" in
+  let H0 := fresh "H0" in
+  remember t as o eqn:Ho;
+  cbn in H; 
+  inversion Ho as [ H0 ]; cbn in Ho;
+  rewrite <- Ho in H; rewrite H0 in H;
+  clear o Ho H0.
 
 Lemma infer_check_prim : forall M G A,
   (infer G (term_to_iterm M) = Some A
@@ -248,6 +280,20 @@ Proof.
   - destruct H; cbn in *.
     inversion H. constructor.
     assert (A = typebool); auto. subst. constructor.
+  - rewrite unfold_check_if in H.
+    rewrite unfold_infer_if in H.
+    destruct H;
+    ind_rem (check G (C (term_to_iterm M1)) typebool) m1 Hm1; di a;
+    ind_rem (infer G (term_to_iterm M2)) m2 Hm2;
+    fold_cbn (check G (C (term_to_iterm M3)) a) H;
+    ind_rem (check G (C (term_to_iterm M3)) a) m3 Hm3;
+    cbn in H; inversion H; subst; di a0.
+    apply from_guard_type_eq in H. subst. auto.
+  - destruct H;
+    fold_cbn (check G (C (term_to_iterm M)) t) H;
+    ind_rem (check G (C (term_to_iterm M)) t) m Hm;
+    cbn in H; inversion H; subst; clear H; di a.
+      apply from_guard_type_eq in H1. subst. auto.
   - destruct H; cbn in *.
     constructor. auto.
     ind_rem (lookup G v) a Ha. constructor. 
