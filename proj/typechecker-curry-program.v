@@ -4,6 +4,8 @@ Require Import List.
 
 (* utils *)
 
+Check exist.
+
 Definition ret {A : Type} (x : A) := Some x.
  
 Definition bind {A B : Type} (a : option A) (f : A -> option B) : option B :=
@@ -20,6 +22,13 @@ Notation "A >>= F" := (bind A F) (at level 42, left associativity).
 
 Notation "X <-- A ; B" :=
   (bind A (fun X => B))
+  (right associativity, at level 60).
+
+Notation "'[' x ',' H ']' <-- A ; B" :=
+  (match A with
+  | Some (exist _ x H) => B
+  | None => None
+  end)
   (right associativity, at level 60).
 
 Notation "A ;; B" :=
@@ -52,7 +61,7 @@ Eval compute in (if string_dec "a" "a" then 1 else 2). (* porównanie napisów *
 *)
 
 Inductive type :=
-| typebool : type
+(* | typebool : type *)
 | typevar : var -> type
 | typelam : type -> type -> type
 .
@@ -62,15 +71,15 @@ Notation "a ~> b" :=
 .
 Fixpoint type_eq (a b : type) : bool :=
   match a, b with
-  | typebool, typebool => true
+  (* | typebool, typebool => true *)
   | typevar x, typevar y => if string_dec x y then true else false
   | a1 ~> a2, b1 ~> b2 => andb (type_eq a1 b1) (type_eq a2 b2)
   | _, _ => false
   end
 .
 Inductive term :=
-| termbool : bool -> term
-| termif : term -> term -> term -> term
+(* | termbool : bool -> term
+| termif : term -> term -> term -> term *)
 | termvar : var -> term
 | lam : var -> type -> term -> term
 | termapp : term -> term -> term
@@ -88,12 +97,12 @@ Fixpoint lookup (G : ctx) (x : var) : option type :=
   end
 .
 Inductive has_type : ctx -> term -> type -> Prop :=
-| bool_has_type : forall G b, has_type G (termbool b) typebool
+(* | bool_has_type : forall G b, has_type G (termbool b) typebool
 | if_has_type : forall G b c1 c2 a,
   has_type G b typebool ->
   has_type G c1 a -> 
   has_type G c2 a -> 
-  has_type G (termif b c1 c2) a
+  has_type G (termif b c1 c2) a *)
 | var_has_type : forall G x a, lookup G x = Some a -> has_type G (termvar x) a
 | lam_has_type : forall G x M (a b : type),
   has_type ((x, b) :: G) M a ->
@@ -103,58 +112,77 @@ Inductive has_type : ctx -> term -> type -> Prop :=
 .
 Hint Constructors has_type term type.
 
-Fixpoint infer (G : ctx) (M : term) : option type :=
+Inductive iterm :=
+(* | itermbool : bool -> iterm *)
+(* | itermif : cterm -> cterm -> cterm -> iterm *)
+| itermvar : var -> iterm
+| ilam : var -> type -> cterm -> iterm
+| itermapp : cterm -> cterm -> iterm
+with cterm :=
+| C : iterm -> cterm
+.
+
+Fixpoint term_to_iterm M :=
+  let I x := C (term_to_iterm x) in
   match M with
-  | termbool _ => Some typebool
-  | termif b c1 c2 =>
-    check G b typebool ;;
-    a <-- infer G c1 ;
-    check G c2 a ;;
-    ret a
-  | termvar x => lookup G x
-  | lam x a N => 
-    b <-- infer ((x, a) :: G) N ;
-    ret (a ~> b)
-  | M1 · M2 => 
-    match infer G M1 with
-    | Some (a ~> b) => 
-      check G M2 a ;;
-      ret b
-    | _ => None
-    end
-  end
-with check (G : ctx) (M : term) (A : type) : option unit :=
-  match M with
-  | termbool _ =>
-    guard (type_eq A typebool) ;;
-    ret tt
-  | termif b c1 c2 =>
-    check G b typebool ;;
-    check G c1 A ;;
-    check G c2 A
-  | termvar x =>
-    a <-- lookup G x ;
-    guard (type_eq A a) ;;
-    ret tt
-  | lam x a N => 
-    match A with
-    | a' ~> b =>
-      guard (type_eq a' a) ;;
-      check ((x, a) :: G) N b
-    | _ => None
-    end
-  | M1 · M2 => 
-    match infer G M1 with
-    | Some (a2 ~> a) => 
-      guard (type_eq a A) ;;
-      check G M2 a2
-    | _ => None
-    end
-  (* | _ => 
-    a' <-- infer G M ;
-    if type_eq a a' then Some a else None *)
+  (* | termbool b => itermbool b *)
+  (* | termif b c1 c2 => itermif (I b) (I c1) (I c2) *)
+  | termvar x => itermvar x
+  | lam x a N => ilam x a (I N)
+  | termapp M1 M2 => itermapp (I M1) (I M2)
   end
 .
+
+Definition unC cM :=
+  match cM with
+  | C M => M
+  end.
+Hint Unfold unC.
+
+Fixpoint iterm_to_term iM :=
+  let T x := iterm_to_term (unC x) in
+  match iM with
+  (* | itermbool b => termbool b *)
+  (* | itermif (C b) (C c1) (C c2) => termif (T b) (T c1) (T c2) *)
+  | itermvar x => termvar x
+  | ilam x a cN => lam x a (T cN)
+  | itermapp cM1 cM2 => (T cM1) · (T cM2)
+  end
+.
+
+Program Fixpoint infer (G : ctx) (M : iterm) : 
+    option { A : type | has_type G (iterm_to_term M) A } :=
+  match M with
+  (* | itermbool _ => ret (exist typebool _) *)
+  (* | itermif cb (C c1) cc2 =>
+    check G cb typebool ;;
+    a <-- infer G c1 ;
+    check G cc2 a ;;
+    ret a *)
+  | itermvar x => 
+    a <-- lookup G x ;
+    ret (exist _ a (var_has_type G x a _))
+  | ilam x a (C N) => 
+    [b, H] <-- infer ((x, a) :: G) N ;
+    ret (exist _ (a ~> b) _)
+  | itermapp (C M1) cM2 => 
+    match infer G M1 with
+    | Some (exist _ (a ~> b) Hm1) => 
+      [a', Hm2] <-- check G cM2 a ;
+      ret (exist _ b _)
+    | _ => None
+    end
+  end
+with check (G : ctx) (M : cterm) (A : type) : 
+    option { A : type | has_type G (iterm_to_term (unC M)) A } :=
+  match M with
+  | C M =>  
+    [a, H] <-- infer G M ;
+    guard (type_eq A a) ;;
+    ret (exist _ A _)
+  end
+.
+Obligation 1 of infer.
 
 Definition vx := termvar "x"%string.
 Definition vy := termvar "y"%string.
@@ -253,35 +281,6 @@ Proof.
   exists a1_1.
   auto.
   Qed.
-
-(* Lemma infer_check_ok : forall M G a,
-  infer G M = Some a \/ check G M a = Some tt -> has_type G M a.
-Proof.
-  induction M; intros.
-  - destruct H.
-    cbn in H. inversion H. constructor.
-    cbn in H. ind_rem (type_eq a typebool) t Ht. destruct a; try_inv.
-  - cbn in H.
-    ind_rem (check G M1 typebool) cm1 Hcm1. di a0.
-    ind_rem (infer G M2) im2 Him2.
-    ind_rem (check G M3 a0) cm3 Hcm3. di a1.
-    inversion H. subst. clear H.
-    apply eq_sym in Hcm1. apply check_to_infer in Hcm1. apply IHM1 in Hcm1.
-    apply eq_sym in Hcm3. apply check_to_infer in Hcm3. apply IHM3 in Hcm3.
-    apply eq_sym in Him2. apply IHM2 in Him2.
-    constructor; assumption.
-  - constructor. cbn in H. auto.
-  - apply infer_lam in H as H1; destruct H1 as [ b H1 ];
-      destruct H1 as [H0 H1]; rewrite H0 in *; clear H0.
-    constructor.
-    apply IHM.
-    assumption.
-  - apply infer_app in H as H1; 
-      destruct H1 as [b H1]; destruct H1 as [H1 H2].
-    apply app_has_type with b.
-    + apply IHM1. assumption.
-    + apply check_to_infer in H2. apply IHM2. auto.
-  Qed. *)
 
 Lemma infer_ok : forall G M a, infer G M = Some a -> has_type G M a.
 Proof.
