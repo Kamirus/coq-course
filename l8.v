@@ -62,8 +62,8 @@ CoInductive Infinite {A : Type} (t : LTree A) : Prop :=
   l : LTree A;
   r : LTree A;
   p : unnode A t = Some (l, v, r);
-  infl : Infinite A l;
-  infr : Infinite A r;
+  infl : Infinite l;
+  infr : Infinite r;
 }.
 
 Print Infinite.
@@ -181,7 +181,7 @@ Arguments tl {A}.
 CoInductive stream_eq {A : Type} (s1 s2 : Stream A) : Prop :=
 {
     hds : hd s1 = hd s2;
-    tls : stream_eq A (tl s1) (tl s2);
+    tls : stream_eq (tl s1) (tl s2);
 }.
 
 Lemma stream_eq_refl :
@@ -224,16 +224,24 @@ CoFixpoint seq_to_stream {A : Type} (f : nat -> A) : Stream A :=
   |}
 .
 
+Lemma fold_stream_to_seq : forall (A : Type) (s : Stream A),
+  (fun n : nat => hd (nth (tl s) n)) = stream_to_seq (tl s).
+  auto.
+Qed.
+
 Lemma stream_id : forall (A : Type) (s : Stream A),
   stream_eq s (seq_to_stream (stream_to_seq s)).
 Proof.
   cofix CH. intros.
   constructor.
     cbn; unfold stream_to_seq; cbn; reflexivity.
-    cbn. constructor.
-      cbn; unfold stream_to_seq; cbn; reflexivity.
-      apply CH.
+    cbn. unfold stream_to_seq; cbn. rewrite fold_stream_to_seq. apply CH.
 Qed.
+    (* cbn. constructor.
+      cbn; unfold stream_to_seq; cbn; reflexivity.
+      simpl.
+      apply CH.
+Qed. *)
 
 Require Import FunctionalExtensionality.
 
